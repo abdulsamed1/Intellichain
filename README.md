@@ -36,17 +36,31 @@ User Tweet  --->  Eliza Agent  --->  LLM  --->  Supabase (verify code)
 - **Database**: Supabase (PostgreSQL + API)
 - **Oracle Bridge**: Chainlink Functions
 - **Blockchain**: Avalanche Fuji Testnet
+- **Testing**: Foundry Toolkit
+- **Auditing**: Slither + Cyfrinup
 
 ---
 
 ## 🚀 Setup Guide
 
-### 1. Clone Repo
+### 1. Using Docker
+Use the docker image. It includes our project in a single image. /home/share will be mounted to /share in the container.
+
+```bash
+docker pull ????????????????
+```
+
+###To share a directory in the container:
+```bash
+docker run -it -v /home/share:/share image ????????????
+```
 
 
 ### 2. Supabase Setup
+
 - Create a project at [supabase.com](https://supabase.com)
 - Create `gift_codes` table:
+  
   ```sql
   CREATE TABLE gift_codes (
     id SERIAL PRIMARY KEY,
