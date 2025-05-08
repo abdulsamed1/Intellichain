@@ -72,16 +72,16 @@ docker run -it -v /home/share:/share image ????????????
   ```
 - Get Supabase URL and `anon` key.
 
-### 3. Configure Environment
-Create `.env` file:
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_anon_key
-TWITTER_API_KEY=xxx
-TWITTER_API_SECRET=xxx
-TWITTER_BEARER_TOKEN=xxx
-CHAINLINK_FUNCTIONS_API_KEY=xxx
-AVALANCHE_RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
+
+### 3.This project depends on:
+
+- OpenZeppelin Contracts
+- Chainlink contracts
+
+To install all dependencies:
+
+```bash
+make install
 ```
 
 ### 4. Eliza Agent Configuration
