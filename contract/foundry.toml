@@ -1,0 +1,11 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+auto_detect_remappings = true
+
+# Specify the environment file
+env_file = ".env"
+# See more advanced configuration options, such as profiles and remappings, at:
+# https://github.com/foundry-rs/foundry/tree/master/config
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config[profile.default]
