@@ -66,7 +66,7 @@ clean:  ## Clean build artifacts and dependencies
 
 install:  ## Install project dependencies
 	@echo "📦 Installing project dependencies..."
-	@forge install --no-commit
+	@forge install
 
 update:  ## Update all dependencies
 	@echo "🔄 Updating all dependencies..."
