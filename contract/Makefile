@@ -64,7 +64,6 @@ clean:  ## Clean build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."
 	@forge clean
 
-
 install:  ## Install dependencies from .gitmodules and forge install (if needed)
     @echo "📦 Installing project dependencies..."
     @if [ -f .gitmodules ]; then \
