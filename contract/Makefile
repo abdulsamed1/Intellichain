@@ -61,15 +61,16 @@ clean:  ## Clean build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."
 	@forge clean
 
-install:  ## Install dependencies from .gitmodules or forge install
+
+install:  ## Install dependencies from .gitmodules and forge install (if needed)
 	@echo "📦 Installing project dependencies..."
-	@if [ -f .gitmodules ]; then \   
-	@echo "🧩 Initializing git submodules..."; \
-	git submodule init || true; \
-	git submodule update --recursive --remote --force; \
-	else \	
-	@echo "⬇️ .gitmodules not found. Falling back to forge install..."; \	
+	@if [ -f .gitmodules ]; then \
+		echo "🧩 Initializing git submodules..."; \
+		git submodule init || echo "⚠️ Git submodules already initialized"; \
+		git submodule update --recursive --remote --force; \
+	fi
 	@forge install
+
 
 update:  ## Update all dependencies
 	@echo "🔄 Updating all dependencies..."
