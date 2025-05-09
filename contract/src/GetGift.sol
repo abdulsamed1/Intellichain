@@ -80,8 +80,6 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     ) external onlyAllowList returns (bytes32 requestId) {
         // make sure the code is redeemable
         // Checks-Effects-Interactions pattern
-
-        require(reqIdToAddr[lastRequestId] == address(0), "the code is already redeemed");
         require(allowList[userAddr], "the user is not in allow list");
         require(args.length > 0, "args is empty");
 
@@ -91,6 +89,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
 
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
+        
         req.initializeRequestForInlineJavaScript(SOURCE);
 
         if (donHostedSecretsVersion > 0) {
