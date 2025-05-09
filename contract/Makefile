@@ -72,7 +72,7 @@ install:  ## Install dependencies from .gitmodules and forge install (if needed)
         git submodule init || echo "⚠️ Git submodules already initialized"; \
         git submodule update --recursive --remote --force; \
     fi
-    forge install
+    @forge install
 
 update:  ## Update all dependencies
 	@echo "🔄 Updating all dependencies..."
