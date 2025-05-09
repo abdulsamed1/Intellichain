@@ -64,17 +64,26 @@ clean:  ## Clean build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."
 	@forge clean
 
-install:  ## Install project dependencies
-	@echo "📦 Installing project dependencies..."
-	@forge install
+install:  ## Install project dependencies (via git submodules or forge install)
+    @echo "📦 Installing project dependencies..."
+    @if [ -d lib ] && [ "$$(ls -A lib)" ]; then \
+        echo "✅ Dependencies already exist via git submodules. Skipping forge install."; \
+    else \
+        echo "⬇️ Running forge install..."; \
+        @forge install; \
+    fi
 
-update:  ## Update all dependencies
-	@echo "🔄 Updating all dependencies..."
-	@forge update
+update:  ## Update all dependencies (including git submodules)
+    @echo "🔄 Updating all dependencies..."
+    @if [ -f .gitmodules ] && command -v git >/dev/null 2>&1; then \
+        echo "🔄 Updating git submodules..."; \
+        git submodule update --recursive --remote --force; \
+    fi
+    @forge update
 
 build:  ## Compile contracts
-	@echo "🏗️  Building contracts with optimization and force rebuild..."
-	@forge build --optimize --force
+    @echo "🏗️  Building contracts with optimization and force rebuild..."
+    @forge build --optimize --force
 
 # --------------------------
 # Testing & Verification
