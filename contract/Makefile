@@ -53,9 +53,6 @@ help:  ## Display comprehensive help menu
 	@printf "───────────────────────────────────────────────\n"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[1;32m%-25s\033[0m%s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-init: clean install update  ## Initialize project (clean, install, update)
-	@echo "🔄 Initializing project: cleaning, installing and updating dependencies..."
-	@rm -rf .gitmodules .git/modules/* lib node_modules
 
 # --------------------------
 # Project Setup
@@ -64,13 +61,14 @@ clean:  ## Clean build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."
 	@forge clean
 
-install:  ## Install dependencies from .gitmodules and forge install (if needed)
+install:  ## Install dependencies from .gitmodules or forge install
 	@echo "📦 Installing project dependencies..."
-	@if [ -f .gitmodules ]; then \
-		echo "🧩 Initializing git submodules..."; \
-		git submodule init || echo "⚠️ Git submodules already initialized"; \
-		git submodule update --recursive --remote --force; \
-	fi
+	@if [ -f .gitmodules ]; then \   
+	@echo "🧩 Initializing git submodules..."; \
+	git submodule init || true; \
+	git submodule update --recursive --remote --force; \
+	else \	
+	@echo "⬇️ .gitmodules not found. Falling back to forge install..."; \	
 	@forge install
 
 update:  ## Update all dependencies

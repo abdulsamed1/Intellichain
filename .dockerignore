@@ -7,7 +7,6 @@
 !docker-compose.debug.yml
 !.dockerignore
 !Makefile
-.git
 *.md
 data
 __pycache__
