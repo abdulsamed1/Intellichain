@@ -54,36 +54,33 @@ help:  ## Display comprehensive help menu
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[1;32m%-25s\033[0m%s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 init: clean install update  ## Initialize project (clean, install, update)
-    @echo "🔄 Initializing project: cleaning, installing and updating dependencies..."
-    @rm -rf .gitmodules .git/modules/* lib node_modules
+	@echo "🔄 Initializing project: cleaning, installing and updating dependencies..."
+	@rm -rf .gitmodules .git/modules/* lib node_modules
 
 # --------------------------
 # Project Setup
 # --------------------------
 clean:  ## Clean build artifacts and dependencies
-    @echo "🧹 Cleaning build artifacts..."
-    @forge clean
+	@echo "🧹 Cleaning build artifacts..."
+	@forge clean
 
-install:  ## Install project dependencies (via git submodules or forge install)
+
+install:  ## Install dependencies from .gitmodules and forge install (if needed)
     @echo "📦 Installing project dependencies..."
-    @if [ -d lib ] && [ "$$(ls -A lib)" ]; then \
-        echo "✅ Dependencies already exist via git submodules. Skipping forge install."; \
-    else \
-        echo "⬇️ Running forge install..."; \
-        forge install; \
-    fi
-
-update:  ## Update all dependencies (including git submodules)
-    @echo "🔄 Updating all dependencies..."
-    @if [ -f .gitmodules ] && command -v git >/dev/null 2>&1; then \
-        echo "🔄 Updating git submodules..."; \
+    @if [ -f .gitmodules ]; then \
+        echo "🧩 Initializing git submodules..."; \
+        git submodule init || echo "⚠️ Git submodules already initialized"; \
         git submodule update --recursive --remote --force; \
     fi
-    @forge update
+    forge install
+
+update:  ## Update all dependencies
+	@echo "🔄 Updating all dependencies..."
+	@forge update
 
 build:  ## Compile contracts
-    @echo "🏗️  Building contracts with optimization and force rebuild..."
-    @forge build --optimize --force
+	@echo "🏗️  Building contracts with optimization and force rebuild..."
+	@forge build --optimize --force
 
 # --------------------------
 # Testing & Verification
