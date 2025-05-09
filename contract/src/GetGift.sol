@@ -5,18 +5,20 @@ import {FunctionsClient} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0
 import {FunctionsRequest} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import {ERC721} from "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
  * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
  * DO NOT USE THIS CODE IN PRODUCTION.
  */
-contract GetGift is FunctionsClient, ERC721URIStorage {
+contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     using FunctionsRequest for FunctionsRequest.Request;
 
-    bytes32 public s_lastRequestId;
-    bytes public s_lastResponse;
-    bytes public s_lastError;
+    bytes32 public lastRequestId;
+    bytes public lastResponse;
+    bytes public lastError;
+
     string public result;
     mapping(address => bool) private allowList;
     mapping(string => bool) private giftCodeRedeemed;
@@ -30,9 +32,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage {
 
     // Gift codes and NFT metadata (saved on IPFS)
     mapping(bytes => string) giftToTokenUri;
-    bytes ITEM_1 = bytes("100 discount");
-    bytes ITEM_2 = bytes("50 discount");
-    bytes ITEM_3 = bytes("1-month premium");
+    bytes private constant ITEM_1 = bytes("100 discount");
+    bytes private constant ITEM_2 = bytes("50 discount");
+    bytes private constant ITEM_3 = bytes("1-month premium");
 
     string constant ITEM_1_METADATA = "ipfs://QmaGqBNqHazCjSMNMuDk6VrgjNLMQKNZqaab1vfMHAwkoj";
     string constant ITEM_2_METADATA = "ipfs://QmfNhhpUezQLcyqXBGL4ehPwo7Gfbwk9yy3YcJqGgr9dPb";
@@ -77,21 +79,31 @@ contract GetGift is FunctionsClient, ERC721URIStorage {
         address userAddr
     ) external onlyAllowList returns (bytes32 requestId) {
         // make sure the code is redeemable
+        // Checks-Effects-Interactions pattern
+
+        require(reqIdToAddr[lastRequestId] == address(0), "the code is already redeemed");
+        require(allowList[userAddr], "the user is not in allow list");
+        require(args.length > 0, "args is empty");
+
+        // Effects
         string memory giftCode = args[0];
         require(!giftCodeRedeemed[giftCode], "the code is redeemed");
 
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(SOURCE);
+
         if (donHostedSecretsVersion > 0) {
             req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
         }
         if (args.length > 0) req.setArgs(args);
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
 
-        reqIdToAddr[s_lastRequestId] = userAddr;
-        reqIdToGiftCode[s_lastRequestId] = giftCode;
-        return s_lastRequestId;
+        lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
+
+        // Interactions
+        reqIdToAddr[lastRequestId] = userAddr;
+        reqIdToGiftCode[lastRequestId] = giftCode;
+        return lastRequestId;
     }
 
     /**
@@ -102,13 +114,13 @@ contract GetGift is FunctionsClient, ERC721URIStorage {
      * Either response or error parameter will be set, but never both
      */
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        if (s_lastRequestId != requestId) {
+        if (lastRequestId != requestId) {
             revert UnexpectedRequestID(requestId);
         }
-        s_lastResponse = response;
-        s_lastError = err;
+        lastResponse = response;
+        lastError = err;
 
-        emit Response(requestId, s_lastResponse, s_lastError);
+        emit Response(requestId, lastResponse, lastError);
 
         // check if the code is valid, incorrected code returns empty string
         if (keccak256(response) == keccak256(bytes("not found"))) return;
@@ -127,15 +139,17 @@ contract GetGift is FunctionsClient, ERC721URIStorage {
         }
     }
 
-    function safeMint(address to, string memory uri) internal {
+    function safeMint(address to, string memory uri) internal nonReentrant {
+        // @audit  add nonReentrant modifier to prevent re-entrancy attack
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         tokenId++;
     }
-
-    function addGift(string memory giftName, string memory _tokenUri) public onlyAllowList {
+    /*
+    function addGift(string memory giftName, string memory _tokenUri) internal onlyAllowList {
         giftToTokenUri[bytes(giftName)] = _tokenUri;
     }
+    */
 
     function addToAllowList(address addrToAdd) external onlyAllowList {
         allowList[addrToAdd] = true;
