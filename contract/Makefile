@@ -65,6 +65,7 @@ install:  ## Install dependencies via Git submodules
 	@echo "📦 Installing project dependencies using Git submodules..."
 	@git submodule init
 	@git submodule update --recursive --remote --force
+	@forge install
 
 update:  ## Update all submodules
 	@echo "🔄 Updating all dependencies..."

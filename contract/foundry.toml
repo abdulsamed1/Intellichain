@@ -4,8 +4,8 @@ out = "out"
 libs = ["lib"]
 auto_detect_remappings = true
 
-# Specify the environment file
+# Load environment variables from this file
 env_file = ".env"
-# See more advanced configuration options, such as profiles and remappings, at:
+
+# For more configuration options, see:
 # https://github.com/foundry-rs/foundry/tree/master/config
-# See more config options https://github.com/foundry-rs/foundry/tree/master/config[profile.default]
