@@ -31,7 +31,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
     // Gift codes and NFT metadata (saved on IPFS)
-    mapping(bytes => string) giftToTokenUri;
+    mapping(bytes => string) private giftToTokenUri;
     bytes private constant ITEM_1 = bytes("100 discount");
     bytes private constant ITEM_2 = bytes("50 discount");
     bytes private constant ITEM_3 = bytes("1-month premium");
@@ -53,7 +53,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     string public constant SOURCE = "const giftCode = args[0];"
         'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
-        'url: "https://nwkmcizenqgokebiuass.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
+        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
         'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {" "console.error(apiResponse.error);"
         'throw Error("Request failed: " + apiResponse.message);' "};" "const { data } = apiResponse;"
         "const item = data.find(item => item.gift_code == giftCode);"
@@ -89,7 +89,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
 
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
-        
+
         req.initializeRequestForInlineJavaScript(SOURCE);
 
         if (donHostedSecretsVersion > 0) {
@@ -161,5 +161,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     modifier onlyAllowList() {
         require(allowList[msg.sender], "you do not have permission to call the function");
         _;
+    }
+
+    function getgiftCodeRedeemed(string memory code) external view returns (bool) {
+        return giftCodeRedeemed[code];
     }
 }
