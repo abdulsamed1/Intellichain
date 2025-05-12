@@ -515,11 +515,13 @@ contract GetGiftTest is Test {
         // Second fulfillment should fail with UnexpectedRequestID
         vm.startPrank(ROUTER_ADDR);
         vm.expectRevert(abi.encodeWithSelector(GetGift.UnexpectedRequestID.selector, requestId));
-        address(getGift).call(
+        (bool success,) = address(getGift).call(
             abi.encodeWithSignature(
                 "handleOracleFulfillment(bytes32,bytes,bytes)", requestId, validResponse, emptyError
             )
         );
+        // The call should revert, so success should be false
+        assertFalse(success);
         vm.stopPrank();
     }
 

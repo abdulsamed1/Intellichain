@@ -46,6 +46,4 @@ contract GetGiftScript is Script {
         // End the broadcast session
         vm.stopBroadcast();
     }
-
-   
 }
