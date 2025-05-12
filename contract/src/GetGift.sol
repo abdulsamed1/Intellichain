@@ -7,11 +7,6 @@ import {ERC721} from "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.s
 import {ERC721URIStorage} from "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-/**
- * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
- * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
- * DO NOT USE THIS CODE IN PRODUCTION.
- */
 contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     using FunctionsRequest for FunctionsRequest.Request;
 
@@ -27,6 +22,10 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     uint256 public tokenId;
 
     error UnexpectedRequestID(bytes32 requestId);
+    error CodeAlreadyRedeemed(string giftCode);
+    error InvalidSubscription(uint64 subscriptionId);
+    error InvalidGiftType(string giftType);
+    error UserNotAllowed(address user);
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
@@ -45,11 +44,6 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     bytes32 public constant DON_ID = 0x66756e2d6176616c616e6368652d66756a692d31000000000000000000000000;
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
-    // Hardcode javascript code that is to sent to DON
-    // REPLACE THE SUPBASE PROJECT NAME in js code below:
-    // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
-    // TABLE_NAME is the name of table created in step 1.
-    // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
     string public constant SOURCE = "const giftCode = args[0];"
         'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
@@ -65,90 +59,103 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         giftToTokenUri[ITEM_1] = ITEM_1_METADATA;
         giftToTokenUri[ITEM_2] = ITEM_2_METADATA;
         giftToTokenUri[ITEM_3] = ITEM_3_METADATA;
+        tokenId = 0;
     }
 
-    /**
-     * @notice Send a simple request
-     * @param subscriptionId Billing ID
-     */
     function sendRequest(
         uint8 donHostedSecretsSlotID,
         uint64 donHostedSecretsVersion,
         string[] memory args,
         uint64 subscriptionId,
         address userAddr
-    ) external onlyAllowList returns (bytes32 requestId) {
-        // make sure the code is redeemable
-        // Checks-Effects-Interactions pattern
-        require(allowList[userAddr], "the user is not in allow list");
+    ) external onlyAllowList returns (bytes32) {
+        if (subscriptionId == 0) {
+            revert InvalidSubscription(subscriptionId);
+        }
         require(args.length > 0, "args is empty");
 
-        // Effects
         string memory giftCode = args[0];
-        require(!giftCodeRedeemed[giftCode], "the code is redeemed");
+        require(bytes(giftCode).length > 0, "Invalid gift code");
+        if (giftCodeRedeemed[giftCode]) {
+            revert CodeAlreadyRedeemed(giftCode);
+        }
 
-        // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
-
         req.initializeRequestForInlineJavaScript(SOURCE);
-
         if (donHostedSecretsVersion > 0) {
             req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
         }
-        if (args.length > 0) req.setArgs(args);
+        req.setArgs(args);
 
-        lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
+        bytes32 requestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
+        lastRequestId = requestId;
+        reqIdToAddr[requestId] = userAddr;
+        reqIdToGiftCode[requestId] = giftCode;
 
-        // Interactions
-        reqIdToAddr[lastRequestId] = userAddr;
-        reqIdToGiftCode[lastRequestId] = giftCode;
-        return lastRequestId;
+        return requestId;
     }
 
-    /**
-     * @notice Store latest result/error
-     * @param requestId The request ID, returned by sendRequest()
-     * @param response Aggregated response from the user code
-     * @param err Aggregated error from the user code or from the execution pipeline
-     * Either response or error parameter will be set, but never both
-     */
-    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        if (lastRequestId != requestId) {
+    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err)
+        internal
+        override
+        nonReentrant
+    {
+        if (requestId != lastRequestId) {
             revert UnexpectedRequestID(requestId);
         }
+
         lastResponse = response;
         lastError = err;
+        emit Response(requestId, response, err);
 
-        emit Response(requestId, lastResponse, lastError);
+        // Clear the request ID first to prevent reuse
+        bytes32 currentRequestId = lastRequestId;
+        lastRequestId = 0;
 
-        // check if the code is valid, incorrected code returns empty string
-        if (keccak256(response) == keccak256(bytes("not found"))) return;
+        if (err.length == 0 && response.length > 0) {
+            address userAddr = reqIdToAddr[currentRequestId];
+            string memory giftCode = reqIdToGiftCode[currentRequestId];
+            require(userAddr != address(0), "Invalid user address");
+            require(bytes(giftCode).length > 0, "Invalid gift code");
 
-        // If no error, mint the NFT
-        if (err.length == 0) {
-            // response is not empty, giftCode is valid
-            address userAddr = reqIdToAddr[requestId];
-            string memory tokenUri = giftToTokenUri[response];
-            safeMint(userAddr, tokenUri);
+            if (giftCodeRedeemed[giftCode]) {
+                revert CodeAlreadyRedeemed(giftCode);
+            }
 
-            // mark gift code is redeemed
-            // please be noticed that gift can only be redeemed once
-            string memory giftCode = reqIdToGiftCode[requestId];
+            (string memory giftType) = abi.decode(response, (string));
+            if (keccak256(bytes(giftType)) == keccak256(bytes("not found"))) {
+                return;
+            }
+
+            string memory tokenUri;
+            bytes memory giftTypeBytes = bytes(giftType);
+
+            if (keccak256(giftTypeBytes) == keccak256(ITEM_1)) {
+                tokenUri = ITEM_1_METADATA;
+            } else if (keccak256(giftTypeBytes) == keccak256(ITEM_2)) {
+                tokenUri = ITEM_2_METADATA;
+            } else if (keccak256(giftTypeBytes) == keccak256(ITEM_3)) {
+                tokenUri = ITEM_3_METADATA;
+            } else {
+                revert InvalidGiftType(giftType);
+            }
+
+            require(bytes(tokenUri).length > 0, "Invalid token URI");
+
+            // Perform state updates before external interactions (Checks-Effects-Interactions pattern)
+            uint256 currentTokenId = tokenId;
             giftCodeRedeemed[giftCode] = true;
+            tokenId = currentTokenId + 1;
+
+            // External interactions last
+            _safeMint(userAddr, currentTokenId);
+            _setTokenURI(currentTokenId, tokenUri);
+
+            // Clear the request mappings after successful fulfillment
+            delete reqIdToAddr[currentRequestId];
+            delete reqIdToGiftCode[currentRequestId];
         }
     }
-
-    function safeMint(address to, string memory uri) internal nonReentrant {
-        // @audit  add nonReentrant modifier to prevent re-entrancy attack
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
-        tokenId++;
-    }
-    /*
-    function addGift(string memory giftName, string memory _tokenUri) internal onlyAllowList {
-        giftToTokenUri[bytes(giftName)] = _tokenUri;
-    }
-    */
 
     function addToAllowList(address addrToAdd) external onlyAllowList {
         allowList[addrToAdd] = true;
@@ -159,11 +166,17 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     }
 
     modifier onlyAllowList() {
-        require(allowList[msg.sender], "you do not have permission to call the function");
+        if (!allowList[msg.sender]) {
+            revert UserNotAllowed(msg.sender);
+        }
         _;
     }
 
     function getgiftCodeRedeemed(string memory code) external view returns (bool) {
         return giftCodeRedeemed[code];
+    }
+
+    function getAllowList(address addr) external view returns (bool) {
+        return allowList[addr];
     }
 }

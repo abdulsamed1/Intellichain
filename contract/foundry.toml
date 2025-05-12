@@ -3,9 +3,13 @@ src = "src"
 out = "out"
 libs = ["lib"]
 auto_detect_remappings = true
+optimizer = true
+optimizer_runs = 20000
+via_ir = true
 
 # Load environment variables from this file
 env_file = ".env"
+
 
 # For more configuration options, see:
 # https://github.com/foundry-rs/foundry/tree/master/config

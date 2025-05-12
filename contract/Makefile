@@ -41,7 +41,7 @@ define check_var
 endef
 
 define call_contract
-	@cast call $(1) "$(2)" $(3) --rpc-url $(AVALANCHE_FUJI_RPC_URL)
+	@cast call $(1) "$(2)" $(3) --rpc-url $(TestNet)
 endef
 
 # --------------------------
@@ -79,13 +79,15 @@ build:  ## Compile contracts
 # --------------------------
 # Testing & Verification
 # --------------------------
+
 test: check-network  ## Run basic tests
 	@echo "🧪 Running basic tests..."
-	@forge test -vvv --ffi
+	@forge test -vvvv --ffi 
+
 
 test-fork: check-network  ## Run tests on forked network
 	@echo "🧪 Running tests on forked network..."
-	@forge test -vvv --fork-url $(MAINNET_RPC_URL) --ffi
+	@forge test -vvv --fork-url $(Mainnet) --ffi
 
 test-func:  ## Run specific test 
 	@echo "🧪 Running test on function..."
@@ -121,7 +123,7 @@ anvil-fork: ## Start Anvil node with fork
 	@echo "⏳ Stopping any running Anvil instances..."
 	@pkill -9 anvil || true
 	@echo "🚀 Starting Anvil Fork node..."
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) &
 	@sleep 2
 	@echo "✅ Anvil Fork is running..."
 
@@ -138,7 +140,7 @@ node: ## Start local node
 deploy-fork: ## Start Anvil Fork and Deploy Contract
 	@echo "🚀 Starting Anvil Fork for deployment..."
 	@pkill -9 anvil || true
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) &
 	@sleep 30
 	@echo "📜 Deploying Contract..."
 	@forge script $(CONTRACT_NAME) \
@@ -149,10 +151,10 @@ deploy-fork: ## Start Anvil Fork and Deploy Contract
 # Start an Anvil Fork at a specific block to reduce Infura requests and deploy a contract
 deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 	@echo "🚀 Starting Anvil Fork for deployment at a specific block..."
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) --fork-block-number 21954976 &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) --fork-block-number 21954976 &
 	@sleep 30
 	@echo "📜 Deploying Contract..."
-	@forge script script/Deploy.s.sol:Deploy \
+	@forge script ${CONTRACT_NAME} \
 		--rpc-url http://127.0.0.1:8545 \
 		--broadcast
 
@@ -162,7 +164,7 @@ deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 deploy: ## Deploy to testnet live network	
 	@echo "🚀 Starting Deploy on testnet live network..."
 	@forge script $(CONTRACT_NAME) \
-		--rpc-url $(SEPOLIA_RPC_URL) \
+		--rpc-url $(TestNet) \
 		--keystore $(KEYSTORE_PASSWORD) \
 		--broadcast \
 		--verify \
@@ -181,7 +183,7 @@ verify: check-network check-contract  ## Verify deployed contract
 send: check-network check-keystore check-contract  ## Send transaction
 	@echo "📤 Sending transaction..."
 	@cast send $(CONTRACT_ADDRESS) "$(FUNCTION)" \
-		--rpc-url $(SEPOLIA_RPC_URL) \
+		--rpc-url $(TestNet) \
 		--keystore $(KEYSTORE_PASSWORD) \
 		--value $(VALUE) \
 		--legacy
@@ -189,12 +191,12 @@ send: check-network check-keystore check-contract  ## Send transaction
 call: check-network check-contract  ## Call view function
 	@echo "📞 Calling view function..."
 	@cast call $(CONTRACT_ADDRESS) "$(FUNCTION)" \
-		--rpc-url $(SEPOLIA_RPC_URL)
+		--rpc-url $(TestNet)
 
 create2: check-network check-keystore  ## Deploy with CREATE2
 	@echo "🚀 Deploying contract with CREATE2..."
 	@forge create2 $(CONTRACT_NAME) \
-		--rpc-url $(SEPOLIA_RPC_URL) \
+		--rpc-url $(TestNet) \
 		--keystore $(KEYSTORE_PASSWORD) \
 		--init-code-hash $(SALT)
 
@@ -207,7 +209,7 @@ multisig: check-network  ## Generate multisig transaction
 # --------------------------
 storage: check-network check-contract  ## Inspect contract storage
 	@echo "🔎 Inspecting contract storage..."
-	@cast storage $(CONTRACT_ADDRESS) $(SLOT) --rpc-url $(SEPOLIA_RPC_URL)
+	@cast storage $(CONTRACT_ADDRESS) $(SLOT) --rpc-url $(TestNet)
 
 logs: check-network check-contract  ## View contract logs
 	@echo "📝 Displaying contract logs..."
@@ -216,7 +218,7 @@ logs: check-network check-contract  ## View contract logs
 events: check-network check-contract  ## Decode contract events
 	@echo "🎫 Decoding contract events..."
 	@cast events $(CONTRACT_ADDRESS) \
-		--rpc-url $(SEPOLIA_RPC_URL) \
+		--rpc-url $(TestNet) \
 		--from-block $(FROM_BLOCK) \
 		--to-block $(TO_BLOCK)
 
@@ -225,19 +227,19 @@ events: check-network check-contract  ## Decode contract events
 # --------------------------
 balance: check-network check-address  ## Check ETH balance
 	@echo "💰 Checking ETH balance..."
-	@cast balance $(WALLET_ADDRESS) --rpc-url $(SEPOLIA_RPC_URL)
+	@cast balance $(WALLET_ADDRESS) --rpc-url $(TestNet)
 
 nonce: check-network check-address  ## Check account nonce
 	@echo "🔢 Checking account nonce..."
-	@cast nonce $(WALLET_ADDRESS) --rpc-url $(SEPOLIA_RPC_URL)
+	@cast nonce $(WALLET_ADDRESS) --rpc-url $(TestNet)
 
 gas: check-network  ## Get current gas price
 	@echo "⛽ Fetching current gas price..."
-	@cast gas-price --rpc-url $(SEPOLIA_RPC_URL)
+	@cast gas-price --rpc-url $(TestNet)
 
 block: check-network  ## Get block information
 	@echo "📦 Fetching block information..."
-	@cast block $(BLOCK_NUMBER) --rpc-url $(SEPOLIA_RPC_URL) --json
+	@cast block $(BLOCK_NUMBER) --rpc-url $(TestNet) --json
 
 # --------------------------
 # Advanced Cast Utilities
@@ -256,11 +258,11 @@ sig:  ## Get function selector
 
 tx: check-network  ## Get transaction details
 	@echo "🔍 Fetching transaction details..."
-	@cast tx $(TX_HASH) --rpc-url $(SEPOLIA_RPC_URL) --json
+	@cast tx $(TX_HASH) --rpc-url $(TestNet) --json
 
 receipt: check-network  ## Get transaction receipt
 	@echo "📃 Fetching transaction receipt..."
-	@cast receipt $(TX_HASH) --rpc-url $(SEPOLIA_RPC_URL) --json
+	@cast receipt $(TX_HASH) --rpc-url $(TestNet) --json
 
 # --------------------------
 # Token Standards
@@ -282,25 +284,25 @@ erc1155: check-network check-address  ## قراءة رصيد ERC1155
 # --------------------------
 proof: check-network check-contract  ## Generate storage proof
 	@echo "🔐 Generating storage proof..."
-	@cast proof $(CONTRACT_ADDRESS) $(STORAGE_KEY) --rpc-url $(SEPOLIA_RPC_URL)
+	@cast proof $(CONTRACT_ADDRESS) $(STORAGE_KEY) --rpc-url $(TestNet)
 
 debug: check-network  ## Debug transaction
 	@echo "🐞 Debugging transaction..."
-	@cast debug $(TX_HASH) --rpc-url $(SEPOLIA_RPC_URL)
+	@cast debug $(TX_HASH) --rpc-url $(TestNet)
 
 trace: check-network  ## Trace transaction
 	@echo "🔍 Tracing transaction..."
-	@cast trace $(TX_HASH) --rpc-url $(SEPOLIA_RPC_URL) --steps --verbose
+	@cast trace $(TX_HASH) --rpc-url $(TestNet) --steps --verbose
 
 fork-cheatcodes: check-network  ## Access mainnet state
 	@echo "🌐 Accessing mainnet state via fork cheatcodes..."
-	@forge script --fork-url $(SEPOLIA_RPC_URL) --sig "run(address)" $(CHEAT_ADDRESS)
+	@forge script --fork-url $(TestNet) --sig "run(address)" $(CHEAT_ADDRESS)
 
 # --------------------------
 # Validation Helpers
 # --------------------------
 check-network:
-	$(call check_var,SEPOLIA_RPC_URL)
+	$(call check_var,TestNet)
 
 check-keystore:
 	$(call check_var,KEYSTORE_PASSWORD)
