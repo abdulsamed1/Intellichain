@@ -8,12 +8,16 @@ import {ERC721URIStorage} from "lib/openzeppelin-contracts/contracts/token/ERC72
 import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
+    /**
+     * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
+     * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
+     * DO NOT USE THIS CODE IN PRODUCTION.
+     */
     using FunctionsRequest for FunctionsRequest.Request;
 
-    bytes32 public lastRequestId;
-    bytes public lastResponse;
-    bytes public lastError;
-
+    bytes32 public s_lastRequestId;
+    bytes public s_lastResponse;
+    bytes public s_lastError;
     string public result;
     mapping(address => bool) private allowList;
     mapping(string => bool) private giftCodeRedeemed;
@@ -22,18 +26,14 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     uint256 public tokenId;
 
     error UnexpectedRequestID(bytes32 requestId);
-    error CodeAlreadyRedeemed(string giftCode);
-    error InvalidSubscription(uint64 subscriptionId);
-    error InvalidGiftType(string giftType);
-    error UserNotAllowed(address user);
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
     // Gift codes and NFT metadata (saved on IPFS)
-    mapping(bytes => string) private giftToTokenUri;
-    bytes private constant ITEM_1 = bytes("100 discount");
-    bytes private constant ITEM_2 = bytes("50 discount");
-    bytes private constant ITEM_3 = bytes("1-month premium");
+    mapping(bytes => string) giftToTokenUri;
+    bytes ITEM_1 = bytes("100 discount");
+    bytes ITEM_2 = bytes("50 discount");
+    bytes ITEM_3 = bytes("1-month premium");
 
     string constant ITEM_1_METADATA = "ipfs://QmaGqBNqHazCjSMNMuDk6VrgjNLMQKNZqaab1vfMHAwkoj";
     string constant ITEM_2_METADATA = "ipfs://QmfNhhpUezQLcyqXBGL4ehPwo7Gfbwk9yy3YcJqGgr9dPb";
@@ -44,10 +44,15 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     bytes32 public constant DON_ID = 0x66756e2d6176616c616e6368652d66756a692d31000000000000000000000000;
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
+    // Hardcode javascript code that is to sent to DON
+    // REPLACE THE SUPBASE PROJECT NAME in js code below:
+    // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
+    // TABLE_NAME is the name of table created in step 1.
+    // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
     string public constant SOURCE = "const giftCode = args[0];"
         'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
-        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
+        'url: "https://nwkmcizenqgokebiuass.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
         'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {" "console.error(apiResponse.error);"
         'throw Error("Request failed: " + apiResponse.message);' "};" "const { data } = apiResponse;"
         "const item = data.find(item => item.gift_code == giftCode);"
@@ -59,102 +64,82 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         giftToTokenUri[ITEM_1] = ITEM_1_METADATA;
         giftToTokenUri[ITEM_2] = ITEM_2_METADATA;
         giftToTokenUri[ITEM_3] = ITEM_3_METADATA;
-        tokenId = 0;
     }
 
+    /**
+     * @notice Send a simple request
+     * @param subscriptionId Billing ID
+     */
     function sendRequest(
         uint8 donHostedSecretsSlotID,
         uint64 donHostedSecretsVersion,
         string[] memory args,
         uint64 subscriptionId,
         address userAddr
-    ) external onlyAllowList returns (bytes32) {
-        if (subscriptionId == 0) {
-            revert InvalidSubscription(subscriptionId);
-        }
-        require(args.length > 0, "args is empty");
-
+    ) external onlyAllowList returns (bytes32 requestId) {
+        // make sure the code is redeemable
         string memory giftCode = args[0];
-        require(bytes(giftCode).length > 0, "Invalid gift code");
-        if (giftCodeRedeemed[giftCode]) {
-            revert CodeAlreadyRedeemed(giftCode);
-        }
+        require(!giftCodeRedeemed[giftCode], "the code is redeemed");
 
+        // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(SOURCE);
         if (donHostedSecretsVersion > 0) {
             req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
         }
-        req.setArgs(args);
+        if (args.length > 0) req.setArgs(args);
+        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
 
-        bytes32 requestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
-        lastRequestId = requestId;
-        reqIdToAddr[requestId] = userAddr;
-        reqIdToGiftCode[requestId] = giftCode;
-
-        return requestId;
+        reqIdToAddr[s_lastRequestId] = userAddr;
+        reqIdToGiftCode[s_lastRequestId] = giftCode;
+        return s_lastRequestId;
     }
 
-    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err)
-        internal
-        override
-        nonReentrant
-    {
-        if (requestId != lastRequestId) {
+    /**
+     * @notice Store latest result/error
+     * @param requestId The request ID, returned by sendRequest()
+     * @param response Aggregated response from the user code
+     * @param err Aggregated error from the user code or from the execution pipeline
+     * Either response or error parameter will be set, but never both
+     */
+    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
+        if (s_lastRequestId != requestId) {
             revert UnexpectedRequestID(requestId);
         }
+        s_lastResponse = response;
+        s_lastError = err;
 
-        lastResponse = response;
-        lastError = err;
-        emit Response(requestId, response, err);
+        emit Response(requestId, s_lastResponse, s_lastError);
 
-        // Clear the request ID first to prevent reuse
-        bytes32 currentRequestId = lastRequestId;
-        lastRequestId = 0;
+        // check if the code is valid, incorrected code returns empty string
+        if (keccak256(response) == keccak256(abi.encode("not found"))) return;
 
-        if (err.length == 0 && response.length > 0) {
-            address userAddr = reqIdToAddr[currentRequestId];
-            string memory giftCode = reqIdToGiftCode[currentRequestId];
-            require(userAddr != address(0), "Invalid user address");
-            require(bytes(giftCode).length > 0, "Invalid gift code");
+        // If no error, mint the NFT
+        if (err.length == 0) {
+            // response is not empty, giftCode is valid
+            address userAddr = reqIdToAddr[requestId];
 
-            if (giftCodeRedeemed[giftCode]) {
-                revert CodeAlreadyRedeemed(giftCode);
-            }
+            // Decode the ABI-encoded response
+            string memory giftType = abi.decode(response, (string));
+            string memory tokenUri = giftToTokenUri[bytes(giftType)];
 
-            (string memory giftType) = abi.decode(response, (string));
-            if (keccak256(bytes(giftType)) == keccak256(bytes("not found"))) {
-                return;
-            }
+            safeMint(userAddr, tokenUri);
 
-            string memory tokenUri;
-            bytes memory giftTypeBytes = bytes(giftType);
-
-            if (keccak256(giftTypeBytes) == keccak256(ITEM_1)) {
-                tokenUri = ITEM_1_METADATA;
-            } else if (keccak256(giftTypeBytes) == keccak256(ITEM_2)) {
-                tokenUri = ITEM_2_METADATA;
-            } else if (keccak256(giftTypeBytes) == keccak256(ITEM_3)) {
-                tokenUri = ITEM_3_METADATA;
-            } else {
-                revert InvalidGiftType(giftType);
-            }
-
-            require(bytes(tokenUri).length > 0, "Invalid token URI");
-
-            // Perform state updates before external interactions (Checks-Effects-Interactions pattern)
-            uint256 currentTokenId = tokenId;
+            // mark gift code is redeemed
+            // please be noticed that gift can only be redeemed once
+            string memory giftCode = reqIdToGiftCode[requestId];
             giftCodeRedeemed[giftCode] = true;
-            tokenId = currentTokenId + 1;
-
-            // External interactions last
-            _safeMint(userAddr, currentTokenId);
-            _setTokenURI(currentTokenId, tokenUri);
-
-            // Clear the request mappings after successful fulfillment
-            delete reqIdToAddr[currentRequestId];
-            delete reqIdToGiftCode[currentRequestId];
         }
+    }
+
+    function safeMint(address to, string memory uri) internal {
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+        tokenId++;
+    }
+
+    function addGift(string memory giftName, string memory _tokenUri) public onlyAllowList {
+        giftToTokenUri[bytes(giftName)] = _tokenUri;
     }
 
     function addToAllowList(address addrToAdd) external onlyAllowList {
@@ -166,17 +151,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     }
 
     modifier onlyAllowList() {
-        if (!allowList[msg.sender]) {
-            revert UserNotAllowed(msg.sender);
-        }
+        require(allowList[msg.sender], "you do not have permission to call the function");
         _;
-    }
-
-    function getgiftCodeRedeemed(string memory code) external view returns (bool) {
-        return giftCodeRedeemed[code];
-    }
-
-    function getAllowList(address addr) external view returns (bool) {
-        return allowList[addr];
     }
 }

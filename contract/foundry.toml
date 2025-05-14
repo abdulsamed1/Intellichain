@@ -5,7 +5,24 @@ libs = ["lib"]
 auto_detect_remappings = true
 optimizer = true
 optimizer_runs = 20000
+
+# Cache settings
+cache = true
+cache_path = 'cache'
+
+# Test specific settings
+test = 'test'
+no_match_test = "Fork|Integration"
+
+[profile.production]
 via_ir = true
+optimizer_runs = 1000000
+
+[profile.test]
+via_ir = false
+src = 'test'
+optimizer = true
+optimizer_runs = 5000
 
 # Load environment variables from this file
 env_file = ".env"
