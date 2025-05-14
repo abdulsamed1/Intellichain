@@ -1,28 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import {Script} from "lib/forge-std/src/Script.sol";
 import {console} from "lib/forge-std/src/console.sol";
 import {GetGift} from "../src/GetGift.sol";
 
-contract GetGiftScript is Script {
-    GetGift public getgift;
-
-    function setUp() public returns (GetGift) {
-        // Deploy the contract
+contract DeployGetGift is Script {
+    function run() external {
         vm.startBroadcast();
-        getgift = new GetGift();
+        GetGift getGift = new GetGift();
+        console.log("GetGift deployed to:", address(getGift));
         vm.stopBroadcast();
-        return getgift;
-    }
-
-    function run() public {
-        vm.startBroadcast();
-
-        getgift = new GetGift();
-
-        vm.stopBroadcast();
-        console.log("GetGift contract deployed at: ", address(getgift));
-        vm.startBroadcast();
     }
 }
