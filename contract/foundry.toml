@@ -27,6 +27,8 @@ optimizer_runs = 5000
 # Load environment variables from this file
 env_file = ".env"
 
+[profile.coverage]
+via_ir = true
 
 # For more configuration options, see:
 # https://github.com/foundry-rs/foundry/tree/master/config

@@ -95,7 +95,7 @@ test-func:  ## Run specific test
 
 coverage:  ## Generate coverage report
 	@echo "📊 Generating coverage report..."
-	@forge coverage --report lcov
+	@forge coverage --ir-minimum --via-ir --report lcov
 
 snapshot:  ## Create test snapshots
 	@echo "📸 Creating test snapshots..."
