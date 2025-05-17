@@ -13,6 +13,7 @@ RUN apt-get update && \
         make bash && \
     ln -sf /bin/bash /bin/sh && \
     rm -rf /var/lib/apt/lists/*
+    
 
 # 🧱 Install Node.js
 RUN ARCH=linux-x64 && \
@@ -41,10 +42,18 @@ ENV PATH="/opt/venv/bin:/root/.foundry/bin:/root/.cyfrin/bin:/usr/local/sbin:/us
 # 🧩 Install only runtime dependencies (lightweight)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3 python3-venv git ca-certificates bash curl xz-utils make nano && \
+        python3 python3-venv git ca-certificates bash curl xz-utils make nano locales && \
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=en_US.UTF-8 && \
     ln -sf /bin/bash /bin/sh && \
     rm -rf /var/lib/apt/lists/*
 
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+    
 
 # 🧠 Copy needed files from builder
 COPY --from=builder /opt/venv /opt/venv

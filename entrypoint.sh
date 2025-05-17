@@ -14,7 +14,7 @@ rm -rf "$APP_ROOT" || true
 # Project Cloning
 # =============================
 echo "🚀 Cloning Intellichain project from GitHub..."
-git clone --recurse-submodules https://github.com/abdulsamed113/Intellichain.git  "$APP_ROOT"
+git clone --recurse-submodules https://github.com/abdulsamed1/Intellichain.git  "$APP_ROOT"
 
 # =============================
 # Navigate to Contracts Directory
@@ -100,7 +100,6 @@ setup_rust_tools() {
     fi
 }
 
-setup_rust_tools
 
 # =============================
 # Build Smart Contracts
