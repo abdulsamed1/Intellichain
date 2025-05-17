@@ -93,9 +93,14 @@ test-func:  ## Run specific test
 	@echo "🧪 Running test on function..."
 	@forge test --match-test $(FUNCTION_TEST) -vvv
 
-coverage:  ## Generate coverage report
-	@echo "📊 Generating coverage report..."
-	@forge coverage --ir-minimum --via-ir --report lcov
+coverage:  ## 📊 Generate coverage report for GetGift.sol only
+	@echo "📊 Generating coverage report for GetGift.sol..."
+	@rm -rf coverage-report lcov.info
+	@forge coverage --match-contract GetGift --ir-minimum --report lcov || (echo "❌ forge coverage failed" && exit 1)
+	@mkdir -p coverage-report
+	@genhtml lcov.info --output-directory coverage-report > /dev/null
+	@echo "✅ Coverage report generated in ./coverage-report/index.html"
+
 
 snapshot:  ## Create test snapshots
 	@echo "📸 Creating test snapshots..."

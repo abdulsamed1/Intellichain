@@ -100,7 +100,6 @@ setup_rust_tools() {
     fi
 }
 
-setup_rust_tools
 
 # =============================
 # Build Smart Contracts
