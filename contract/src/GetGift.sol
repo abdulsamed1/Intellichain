@@ -31,9 +31,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
 
     // Gift codes and NFT metadata (saved on IPFS)
     mapping(bytes => string) giftToTokenUri;
-    bytes ITEM_1 = bytes("100 discount");
-    bytes ITEM_2 = bytes("50 discount");
-    bytes ITEM_3 = bytes("1-month premium");
+    bytes constant ITEM_1 = bytes("100 discount");
+    bytes constant ITEM_2 = bytes("50 discount");
+    bytes constant ITEM_3 = bytes("1-month premium");
 
     string constant ITEM_1_METADATA = "ipfs://QmaGqBNqHazCjSMNMuDk6VrgjNLMQKNZqaab1vfMHAwkoj";
     string constant ITEM_2_METADATA = "ipfs://QmfNhhpUezQLcyqXBGL4ehPwo7Gfbwk9yy3YcJqGgr9dPb";
@@ -76,7 +76,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         string[] memory args,
         uint64 subscriptionId,
         address userAddr
-    ) external onlyAllowList returns (bytes32 requestId) {
+    ) external  onlyAllowList returns (bytes32 requestId) {
         // make sure the code is redeemable
         string memory giftCode = args[0];
         require(!giftCodeRedeemed[giftCode], "the code is redeemed");
@@ -131,14 +131,15 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
             giftCodeRedeemed[giftCode] = true;
         }
     }
-
-    function safeMint(address to, string memory uri) internal {
+    
+    function safeMint(address to, string memory uri) internal nonReentrant  {
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         tokenId++;
     }
+    
 
-    function addGift(string memory giftName, string memory _tokenUri) public onlyAllowList {
+    function addGift(string memory giftName, string memory _tokenUri) external onlyAllowList {
         giftToTokenUri[bytes(giftName)] = _tokenUri;
     }
 
