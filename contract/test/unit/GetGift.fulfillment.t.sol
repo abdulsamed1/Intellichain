@@ -62,7 +62,7 @@ contract GetGiftFulfillmentTest is GetGiftBase {
         vm.startPrank(user);
         string[] memory args = new string[](1);
         args[0] = validGiftCode;
-        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
         vm.stopPrank();
 
         bytes32 wrongRequestId = bytes32(uint256(999));
