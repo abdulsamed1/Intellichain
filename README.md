@@ -1,120 +1,147 @@
-# 🎓 Project Documentation: AI-Powered NFT Gifting Agent
+# GetGift Contract Deployment and Interaction Guide
 
-## 🧠 Overview
-This project demonstrates a hybrid Web3/Web2 AI Agent system that allows users to receive NFTs simply by replying to a tweet. It uses:
+This guide explains how to use the Foundry scripts to deploy and interact with the GetGift contract.
 
-- **Eliza Framework** for creating and running AI agents.
-- **Chainlink Functions** to bridge off-chain inputs with on-chain smart contract actions.
-- **Supabase** for secure and scalable off-chain data storage (e.g., gift codes).
+## Prerequisites
 
----
+1. Foundry installed (forge, cast, anvil)
+2. Chainlink Functions subscription (for testnet deployment)
+3. Supabase API key (for database interaction)
 
-## 📌 Features
-- AI Agent (via Eliza) listens to Twitter for natural language NFT requests.
-- Processes inputs using an LLM (e.g., GPT) to understand context.
-- Checks gift code validity in Supabase.
-- Triggers Chainlink Function to mint NFT on Avalanche Fuji testnet.
-- Sends NFT to wallet address mentioned in the tweet.
+## Setup
 
----
+1. Create your Supabase database with a `Gifts` table containing columns:
+   - `gift_code`: The unique code to redeem a gift
+   - `gift_name`: The name/type of the gift (must match one of the gift types in the contract)
 
-## 🏗️ Architecture
+2. Ensure your Foundry.toml file has the correct remappings:
 
+```toml
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "@chainlink/=lib/chainlink/",
+    "@openzeppelin/=lib/openzeppelin-contracts/"
+]
 ```
-User Tweet  --->  Eliza Agent  --->  LLM  --->  Supabase (verify code)
-                                  |                     ↓
-                                  |--------> Chainlink Function
-                                                        ↓
-                                                Smart Contract (Mint NFT)
-```
 
----
+## Script Usage
 
-## 📦 Tech Stack
-- **AI Agent**: [ElizaOS](https://github.com/eliza-ai/elizaos)
-- **LLM**: OpenAI / GPT-style
-- **Database**: Supabase (PostgreSQL + API)
-- **Oracle Bridge**: Chainlink Functions
-- **Blockchain**: Avalanche Fuji Testnet
-- **Testing**: Foundry Toolkit
-- **Auditing**: Slither + Cyfrinup
-
----
-
-## 🚀 Setup Guide
-
-### 1. Using Docker
-Use the docker image. It includes our project in a single image. /home/share will be mounted to /share in the container.
+### 1. Deploy the GetGift Contract
 
 ```bash
-docker pull ????????????????
+forge script script/DeployGetGift.s.sol --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
 ```
 
-###To share a directory in the container:
-```bash
-docker run -it -v /home/share:/share image ????????????
-```
+This will:
+- Deploy the GetGift contract
+- Log the contract address and configuration
 
+Save the deployed contract address for future interactions.
 
-### 2. Supabase Setup
-
-- Create a project at [supabase.com](https://supabase.com)
-- Create `gift_codes` table:
-  
-  ```sql
-  CREATE TABLE gift_codes (
-    id SERIAL PRIMARY KEY,
-    code TEXT UNIQUE NOT NULL,
-    used BOOLEAN DEFAULT FALSE,
-    claimed_by TEXT,
-    created_at TIMESTAMP DEFAULT now()
-  );
-  ```
-- Get Supabase URL and `anon` key.
-
-
-### 3.This project depends on:
-
-- OpenZeppelin Contracts
-- Chainlink contracts
-
-To install all dependencies:
+### 2. Create Chainlink Functions Subscription (if not already created)
 
 ```bash
-make install
+forge script script/CreateSubscription.s.sol:CreateSubscription --sig "createSubscription()" --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
 ```
 
-### 4. Eliza Agent Configuration
-Set up your Eliza Agent with Twitter client and Supabase plugin. Define:
-- Natural language pattern recognition
-- Gift code verification via REST call
-- Trigger to Chainlink Functions when valid
+Save the subscription ID output from this command.
 
-### 5. Chainlink Functions Setup
-- Deploy your on-chain contract to Fuji
-- Set up off-chain source code for Chainlink Functions to:
-  - Receive input (wallet address)
-  - Trigger minting logic
+### 3. Fund the Subscription
 
----
+```bash
+forge script script/CreateSubscription.s.sol:CreateSubscription --sig "fundSubscription(uint64,uint96)" <subscription_id> <amount_in_juels> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
 
-## ✅ Use Cases
-- Marketing campaigns: Reward users who engage with tweets.
-- Event ticketing: Issue NFTs based on RSVP codes.
-- Gaming: Claim in-game items through social media.
+Example to fund with 1 LINK:
+```bash
+forge script script/CreateSubscription.s.sol:CreateSubscription --sig "fundSubscription(uint64,uint96)" 123 1000000000000000000 --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
 
----
+### 4. Add Contract as Consumer to Subscription
 
-## 🛡️ Security Notes
-- All gift codes are stored and verified **off-chain** for privacy.
-- Smart contract uses access control to avoid abuse.
-- Chainlink ensures decentralized and verifiable execution.
+```bash
+forge script script/CreateSubscription.s.sol:CreateSubscription --sig "addConsumer(uint64,address)" <subscription_id> <getgift_contract_address> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
 
----
+### 5. Upload Secrets to DON (Decentralized Oracle Network)
 
-## 🔗 Links
-- [Eliza GitHub](https://github.com/eliza-ai/elizaos)
-- [Chainlink Functions Docs](https://docs.chain.link/functions)
-- [Supabase Docs](https://supabase.com/docs)
-- [Avalanche Fuji](https://docs.avax.network/build/subnet/testnet-fuji)
+For this step, you'll need to use the Chainlink Functions CLI:
 
+```bash
+npx hardhat functions-upload-secrets --network <network_name> --slot <slot_id> --environment <environment_name>
+```
+
+To generate the required JSON file:
+
+```bash
+forge script script/UploadSecrets.s.sol:UploadSecrets --sig "createSecretsJsonFile(string)" <your_supabase_api_key> --rpc-url <your_rpc_url>
+```
+
+### 6. Add Addresses to Allow List (if needed)
+
+```bash
+forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "addToAllowList(address,address)" <getgift_contract_address> <address_to_add> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
+
+### 7. Add Custom Gift Types (if needed)
+
+```bash
+forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "addGift(address,string,string)" <getgift_contract_address> "New Gift Name" "ipfs://your-ipfs-cid" --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
+
+### 8. Redeem a Gift Code
+
+```bash
+forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "redeemGiftCode(address,string,uint8,uint64)" <getgift_contract_address> "GIFT123" <slot_id> <secrets_version> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+```
+
+Replace:
+- `GIFT123` with the gift code to redeem
+- `<slot_id>` with the DON secrets slot ID
+- `<secrets_version>` with the DON secrets version
+
+### 9. Check Response and NFT Minting Status
+
+```bash
+forge script script/DecodeResponse.s.sol:DecodeResponse --sig "decodeLastResponse(address)" <getgift_contract_address> --rpc-url <your_rpc_url>
+```
+
+### 10. View Token Information
+
+```bash
+forge script script/DecodeResponse.s.sol:DecodeResponse --sig "getTokenInfo(address,uint256)" <getgift_contract_address> <token_id> --rpc-url <your_rpc_url>
+```
+
+## Testing with Anvil (Local Development)
+
+For local testing, start Anvil:
+
+```bash
+anvil
+```
+
+Then deploy and interact with your contract using the Anvil RPC URL:
+
+```bash
+forge script script/DeployGetGift.s.sol --rpc-url http://localhost:8545 --private-key <anvil_private_key> --broadcast
+```
+
+## Troubleshooting
+
+1. If you encounter errors related to Chainlink Functions, check:
+   - Subscription is properly funded
+   - Contract is added as a consumer
+   - Secrets are properly uploaded
+   - DON ID and Router address are correct for the network
+
+2. If NFTs aren't minting after gift code redemption:
+   - Verify the gift code exists in your Supabase database
+   - Check that the gift_name in the database matches one of the gift types in the contract
+   - Use the DecodeResponse script to check for any errors
+
+3. For authorization errors:
+   - Ensure the transaction sender is on the allow list
+   - The contract deployer is automatically added to the allow list
