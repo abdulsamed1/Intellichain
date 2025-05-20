@@ -9,7 +9,7 @@ import {NetworkConfigLibrary} from "script/utility/NetworkConfigLibrary.sol";
 
 /**
  * @title InteractWithGetGift
- * @author Claude
+ * @author abdulsamed1
  * @notice Script to interact with the deployed GetGift contract
  * @dev Uses HelperConfig to get network-specific configuration
  */

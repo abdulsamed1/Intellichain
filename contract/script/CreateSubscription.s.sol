@@ -10,7 +10,7 @@ import {FunctionsRouter} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0
 
 /**
  * @title CreateSubscription
- * @author Claude
+ * @author abdulsamed1
  * @notice Script to create a Chainlink Functions subscription
  * @dev Uses HelperConfig to get network-specific configuration
  */

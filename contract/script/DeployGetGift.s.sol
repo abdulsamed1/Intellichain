@@ -10,7 +10,7 @@ import {FunctionsClient} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0
 
 /**
  * @title DeployGetGift
- * @author Claude
+ * @author abdulsamed1
  * @notice Script to deploy the GetGift contract
  * @dev Uses HelperConfig to get network-specific configuration
  */

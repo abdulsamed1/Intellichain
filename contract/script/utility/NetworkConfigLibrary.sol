@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 /**
  * @title NetworkConfigLibrary
- * @author Claude
+ * @author abdulsamed1
  * @notice Library that provides network configurations with gas efficiency
  * @dev Contains pure functions that return network-specific configurations
  */

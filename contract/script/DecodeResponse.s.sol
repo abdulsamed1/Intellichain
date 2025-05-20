@@ -9,7 +9,7 @@ import {NetworkConfigLibrary} from "script/utility/NetworkConfigLibrary.sol";
 
 /**
  * @title DecodeResponse
- * @author Claude
+ * @author abdulsamed1
  * @notice Script to decode the response from Chainlink Functions
  * @dev Uses HelperConfig to get network-specific configuration
  */

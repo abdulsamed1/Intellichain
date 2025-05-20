@@ -9,7 +9,7 @@ import {FunctionsClient} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0
 
 /**
  * @title UploadSecrets
- * @author Claude
+ * @author abdulsamed1
  * @notice Script to upload secrets for DON-hosted encrypted secrets
  * @dev Uses HelperConfig to get network-specific configuration
  */

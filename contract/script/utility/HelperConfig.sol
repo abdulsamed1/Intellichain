@@ -5,7 +5,7 @@ import "./NetworkConfigLibrary.sol";
 
 /**
  * @title HelperConfig
- * @author Claude
+ * @author abdulsamed1
  * @notice Contract that uses NetworkConfigLibrary to manage network configurations
  * @dev Implements a lightweight contract design pattern with minimized state variables
  */
