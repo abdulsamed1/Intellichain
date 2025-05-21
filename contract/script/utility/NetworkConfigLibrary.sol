@@ -32,7 +32,8 @@ library NetworkConfigLibrary {
      * @return supported Whether the network is supported
      */
     function getNetworkConfig(uint256 chainId) internal pure returns (NetworkConfig memory config, bool supported) {
-        if (chainId == 31337) { // Anvil local network
+        if (chainId == 31337) {
+            // Anvil local network
             return (
                 NetworkConfig({
                     router: address(0xd5E230Caa7352F357E1dd3A34c5033F4a3e35f3D),
@@ -43,7 +44,8 @@ library NetworkConfigLibrary {
                 }),
                 true
             );
-        } else if (chainId == 11155111) { // Sepolia testnet
+        } else if (chainId == 11155111) {
+            // Sepolia testnet
             return (
                 NetworkConfig({
                     router: address(0xb83E47C2bC239B3bf370bc41e1459A34b41238D0),
@@ -54,18 +56,7 @@ library NetworkConfigLibrary {
                 }),
                 true
             );
-        } else if (chainId == 43113) { // Fuji testnet
-            return (
-                NetworkConfig({
-                    router: address(0xA9d58B2E4Aa76e4E9dBFd542577c8e044C11A19D),
-                    donId: bytes32(0x6675000000000000000000000000000000000000000000000000000000000000),
-                    callbackGasLimit: 300_000,
-                    linkToken: address(0x0123456789012345678901234567890123456789),
-                    subscriptionId: 123
-                }),
-                true
-            );
-        } else {
+        }else {
             // Return empty config with false flag for unsupported networks
             return (
                 NetworkConfig({
