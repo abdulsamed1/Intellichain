@@ -170,7 +170,7 @@ deploy: ## Deploy to testnet live network
 	@echo "🚀 Starting Deploy on testnet live network..."
 	@forge script $(CONTRACT_NAME) \
 		--rpc-url $(TestNet) \
-		--keystore $(KEYSTORE_PASSWORD) \
+		--private-key $(PRIVATE_KEY) \
 		--broadcast \
 		--verify \
 		--etherscan-api-key $(ETHERSCAN_API_KEY) \
