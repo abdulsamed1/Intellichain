@@ -51,12 +51,20 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
     // TABLE_NAME is the name of table created in step 1.
     // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
-    string public constant SOURCE = "const giftCode = args[0];"
-        'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
+    string public constant SOURCE =
+        "const giftCode = args[0];"
+        'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };'
+        "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
-        'url: "https://nwkmcizenqgokebiuass.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
-        'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {" "console.error(apiResponse.error);"
-        'throw Error("Request failed: " + apiResponse.message);' "};" "const { data } = apiResponse;"
+        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",'
+        'method: "GET",'
+        'headers: { "apikey": apikey}'
+        "});"
+        "if (apiResponse.error) {"
+        "console.error(apiResponse.error);"
+        'throw Error("Request failed: " + apiResponse.message);'
+        "};"
+        "const { data } = apiResponse;"
         "const item = data.find(item => item.gift_code == giftCode);"
         'if(item == undefined) {return Functions.encodeString("not found")};'
         "return Functions.encodeString(item.gift_name);";
