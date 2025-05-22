@@ -1,0 +1,15 @@
+# تجاهل جميع الملفات والمجلدات
+**
+
+# باستثناء Dockerfile و docker-compose و ملفات البناء فقط
+!Dockerfile
+!docker-compose.yml
+!docker-compose.debug.yml
+!.dockerignore
+!Makefile
+*.md
+data
+__pycache__
+*.log
+*.swp
+*.swo
