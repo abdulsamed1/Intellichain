@@ -170,17 +170,15 @@ deploy: ## Deploy to testnet live network
 	@echo "🚀 Starting Deploy on testnet live network..."
 	@forge script $(CONTRACT_NAME) \
 		--rpc-url $(TestNet) \
-		--keystore $(KEYSTORE_PASSWORD) \
+		--private-key $(PRIVATE_KEY) \
 		--broadcast \
-		--verify \
-		--etherscan-api-key $(ETHERSCAN_API_KEY) \
-		-vvvv
+
 
 verify: check-network check-contract  ## Verify deployed contract
 	@echo "🔍 Verifying deployed contract..."
 	@forge verify-contract $(CONTRACT_ADDRESS) $(CONTRACT_NAME) \
-		--chain-id 11155111 \
-		--etherscan-api-key $(ETHERSCAN_API_KEY)
+		--etherscan-api-key $(ETHERSCAN_API_KEY) \
+		-vvvv
 
 # --------------------------
 # Contract Interactions
