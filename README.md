@@ -44,11 +44,6 @@ docker pull ????????????????
 docker run -it -v /home/share:/share image ????????????
 ```
 
-### This project depends on:
-
-- OpenZeppelin Contracts
-- Chainlink contracts
-
 To install all dependencies:
 
 ```bash
@@ -62,7 +57,7 @@ Set up your Eliza Agent with Twitter client and Supabase plugin. Define:
 - Trigger to Chainlink Functions when valid
 
 ###  Chainlink Functions Setup
-- Deploy your on-chain contract to Fuji
+- Deploy your on-chain contract to Sepolia
 - Set up off-chain source code for Chainlink Functions to:
   - Receive input (wallet address)
   - Trigger minting logic
