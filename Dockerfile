@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl wget gnupg ca-certificates \
         coreutils git python3 python3-pip python3-venv xz-utils \
-        make bash && \
+        make bash g++ gcc && \
     ln -sf /bin/bash /bin/sh && \
     rm -rf /var/lib/apt/lists/*
     
