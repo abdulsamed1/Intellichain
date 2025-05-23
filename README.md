@@ -1,8 +1,15 @@
-
-# 🧠 Analysis Report ![GitHub Language](https://img.shields.io/badge/language-Solidity-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Last Commit](https://img.shields.io/github/last-commit/your-username/your-repo.svg) ![Audit Status](https://img.shields.io/badge/audit-pending-yellow.svg)
+# 🧠 Final Report ![GitHub Language](https://img.shields.io/badge/language-Solidity-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Last Commit](https://img.shields.io/github/last-commit/your-username/your-repo.svg) ![Audit Status](https://img.shields.io/badge/audit-pending-yellow.svg)
 
 ---
 
+
+## 🔗 References
+
+📊 **HTML Coverage Report**
+View detailed coverage analysis in the browser at:
+[`contract/coverage-report/index.html`](contract/coverage-report/index.html)
+
+---
 ## 📚 Table of Contents
 
 - [📝 Summary](#-summary)
@@ -130,11 +137,3 @@ It’s best practice to emit events for state changes to allow off-chain monitor
 * Located in `src/GetGift.sol` [Line 150](src/GetGift.sol#L150)
 
 </details>
-
----
-
-## 🔗 References
-
-📊 **HTML Coverage Report**
-View detailed coverage analysis in the browser at:
-[`contract/coverage-report/index.html`](contract/coverage-report/index.html)
