@@ -2,7 +2,7 @@
 
 This repo uses the **ElizaOS Agentic AI framework** to create an AI agent that interacts with your input (via terminal or Twitter!).
 
-You give the agent a gift code and your wallet address, and it will mint a gift NFT for you on the **Avalanche Fuji Network**.
+You give the agent a gift code and your wallet address, and it will mint a gift NFT for you on the **Sepolia Network**.
 
 The agent uses custom actions that interact with [Chainlink Functions](https://docs.chain.link/chainlink-functions).
 
@@ -38,45 +38,18 @@ We’ve prepared a GitHub repository for today’s demo, which includes all the 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/QingyangKong/Eliza-Twitter-Chainlink-Functions
+git clone -b for-sepolia https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
 
 ### 2. Install Dependencies
 
 ```bash
-cd Eliza-Twitter-Chainlink-Functions
+cd Eliza-Chainlink-Functions
 pnpm install
 ```
 
-### 3. Create `.env` File
+### 3. Edit `.env` File
 
-```bash
-cp .env.example .env
-```
-
-Your `.env` file should look like this:
-
-```env
-ETHEREUM_PROVIDER_AVALANCHEFUJI= # Add RPC endpoint to Avalanche here
-SUPABASE_API_KEY= # Add Supabase API key here
-PRIVATE_KEY= # Add private key here
-```
-
-### 4. Fill in Environment Variables
-
-| Variable | Description |
-|---------|-------------|
-| `ETHEREUM_PROVIDER_AVALANCHEFUJI` | RPC URL for Avalanche Fuji Testnet (e.g., from Infura or QuickNode) |
-| `SUPABASE_API_KEY` | Public/anon API key from your Supabase project |
-| `PRIVATE_KEY` | Ethereum-compatible private key from your wallet |
-
-Example after filling:
-
-```env
-ETHEREUM_PROVIDER_AVALANCHEFUJI=https://api.avax-test.network/ext/bc/C/rpc
-SUPABASE_API_KEY=eyxxxx.eyxxxx.h3xxxx-K2TJxxxx
-PRIVATE_KEY=xxxxxxxxx
-```
 
 ---
 
@@ -85,6 +58,7 @@ PRIVATE_KEY=xxxxxxxxx
 Run the script to encrypt and upload your Supabase API key to the DON:
 
 ```bash
+cd Eliza-Chainlink-Functions
 node ./scripts/uploadToDON.js
 ```
 
