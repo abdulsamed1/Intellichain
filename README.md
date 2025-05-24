@@ -1,12 +1,12 @@
 # 🎓 Project Documentation: AI-Powered NFT Gifting Agent
 
 ## 🧠 Overview
-This project demonstrates a hybrid Web3/Web2 AI Agent system that allows users to receive NFTs simply by replying to a tweet. It uses:
+This project demonstrates allows users to receive NFTs simply by replying to a tweet.
 ---
 
 ## 📌 Features
-- AI Agent (via Eliza) listens to Twitter for natural language NFT requests.
-- Processes inputs using an LLM (e.g., GPT) to understand context.
+- AI Agent listens to Twitter for natural language NFT requests.
+- Processes inputs using an LLM to understand context.
 - Checks gift code validity in Supabase.
 - Triggers Chainlink Function to mint NFT on testnet.
 - Sends NFT to wallet address mentioned in the tweet.
@@ -44,23 +44,12 @@ docker pull ????????????????
 docker run -it -v /home/share:/share image ????????????
 ```
 
-To install all dependencies:
+Installing dependencies for the contract :
 
 ```bash
+cd contract
 make install
 ```
-
-###  Eliza Agent Configuration
-Set up your Eliza Agent with Twitter client and Supabase plugin. Define:
-- Natural language pattern recognition
-- Gift code verification via REST call
-- Trigger to Chainlink Functions when valid
-
-###  Chainlink Functions Setup
-- Deploy your on-chain contract to Sepolia
-- Set up off-chain source code for Chainlink Functions to:
-  - Receive input (wallet address)
-  - Trigger minting logic
 
 ---
 
