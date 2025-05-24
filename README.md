@@ -1,6 +1,4 @@
-# 🎓 Project Documentation: AI-Powered NFT Gifting Agent
-
-## 🧠 Overview
+# 🧠 Overview
 This project demonstrates allows users to receive NFTs simply by replying to a tweet.
 ---
 
