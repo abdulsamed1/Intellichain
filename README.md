@@ -1,17 +1,7 @@
 ---
 # 🧠 Overview
 
-Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza AI, Supabase for codes, and Chainlink to mint Combines Web2 social with Web3 blockchain for secure, scalable rewards.
-
-
----
-
-## 📌 Features
-- AI Agent listens to Twitter for natural language NFT requests.
-- Processes inputs using an LLM to understand context.
-- Checks gift code validity in Supabase.
-- Triggers Chainlink Function to mint NFT on testnet.
-- Sends NFT to wallet address mentioned in the tweet.
+Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza AI, Supabase for codes, and Chainlink to mint. It combines Web2 social with Web3 blockchain for secure, scalable rewards.
 
 ---
 
@@ -23,12 +13,13 @@ Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza A
 
 ## 📦 Tech Stack
 - **AI Agent**: [ElizaOS](https://github.com/eliza-ai/elizaos)
-- **LLM**: OpenAI / GPT-style
+- **LLM**: Qwen3-235B-A22B
 - **Database**: Supabase (PostgreSQL + API)
-- **Oracle Bridge**: Chainlink Functions
+- **Oracle Bridge**: Chainlink Functions DON
 - **Blockchain**: Sepolia Testnet
 - **Testing**: Foundry Toolkit
 - **Auditing**: Slither + Cyfrinup
+
 
 ---
 
@@ -70,6 +61,5 @@ make install
 ---
 
 ## 🔗 Links
-- [Eliza GitHub](https://github.com/eliza-ai/elizaos)
-- [Chainlink Functions Docs](https://docs.chain.link/functions)
-- [Supabase Docs](https://supabase.com/docs)
+- [Eliza GitHub]([https://github.com/eliza-ai/elizaos](https://github.com/elizaOS/eliza))
+- [Chainlink Functions Docs]([https://docs.chain.link/functions](https://docs.chain.link/chainlink-functions))
