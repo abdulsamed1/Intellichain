@@ -1,5 +1,9 @@
+---
 # 🧠 Overview
-This project demonstrates allows users to receive NFTs simply by replying to a tweet.
+
+Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza AI, Supabase for codes, and Chainlink to mint Combines Web2 social with Web3 blockchain for secure, scalable rewards.
+
+
 ---
 
 ## 📌 Features
