@@ -1,39 +1,38 @@
-### WHAT THIS REPO IS
+# Eliza-Chainlink-Functions
 
-This repo uses the **ElizaOS Agentic AI framework** to create an AI agent that interacts with your input (via terminal or Twitter!).
+## Overview
 
-You give the agent a gift code and your wallet address, and it will mint a gift NFT for you on the **Sepolia Network**.
+This repository demonstrates the use of the **ElizaOS Agentic AI framework** to build an AI agent that interacts with user inputs through a terminal or Twitter interface.
 
-The agent uses custom actions that interact with [Chainlink Functions](https://docs.chain.link/chainlink-functions).
+The agent enables users to provide a gift code and their wallet address to mint a gift NFT on the **Sepolia Network**.
 
-> 📚 The full GitBook walkthrough and tutorial is available at:  
-> [https://cll-devrel.gitbook.io/elizaos-functions-twitter/](https://cll-devrel.gitbook.io/elizaos-functions-twitter/)
+The agent integrates with [Chainlink Functions](https://docs.chain.link/chainlink-functions) through custom actions for seamless on-chain interactions.
+
+
 
 ---
 
-## How to Use API Keys in Chainlink Functions?
+## Using API Keys in Chainlink Functions
 
-Before Chainlink Functions can send an API call, it needs to know the **Supabase API key** to communicate with our database. Chainlink Functions provides two ways to store secrets:
+Chainlink Functions requires API keys (such as the Supabase API key) to access off-chain data securely. There are two methods to store these secrets:
 
 1. **DON-hosted secrets**
 2. **Off-chain secrets**
 
-> ⚠️ Regardless of which method you choose, secrets are always encrypted using **threshold encryption** for security.  
-> Instead of relying on a centralized private key, the DON (Decentralized Oracle Network) partitions a master key into shards, where each node holds only one piece. This ensures high availability and fault tolerance.
+> **Security Note:**
+> All secrets are encrypted using threshold encryption. This approach partitions the master key across multiple Decentralized Oracle Network (DON) nodes, each holding a shard. This design eliminates reliance on a centralized private key and ensures high availability and fault tolerance.
 
 ---
 
-### In This Workshop: Storing Secrets in DON
+## Workshop Focus: Storing Secrets on the DON
 
-We’ll be uploading the Supabase API key directly to the DON. Before we can do that, we must encrypt the key using the DON’s master key.
+In this workshop, you will upload the Supabase API key directly to the DON after encrypting it using the DON’s master key.
 
-To help with this process, we use the `@chainlink/functions-toolkit` NPM library, which allows us to encrypt and upload secrets securely.
+We utilize the `@chainlink/functions-toolkit` NPM library to assist with secure encryption and uploading of secrets.
 
 ---
 
-## Steps to Upload a Secret to Chainlink Functions
-
-We’ve prepared a GitHub repository for today’s demo, which includes all the necessary scripts.
+## Step-by-Step Guide to Upload Secrets
 
 ### 1. Clone the Repository
 
@@ -41,7 +40,8 @@ We’ve prepared a GitHub repository for today’s demo, which includes all the 
 git clone -b for-sepolia https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
 
-or 
+Alternatively:
+
 ```bash
 git clone https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
@@ -53,21 +53,19 @@ cd Eliza-Chainlink-Functions
 pnpm install
 ```
 
-### 3. Edit `.env` File
+### 3. Configure Environment Variables
 
+Edit the `.env` file to add your necessary environment variables (e.g., Supabase keys).
 
----
-
-### 5. Encrypt and Upload the Secret
+### 4. Encrypt and Upload Your Secret
 
 Run the script to encrypt and upload your Supabase API key to the DON:
 
 ```bash
-cd Eliza-Chainlink-Functions
 node ./scripts/uploadToDON.js
 ```
 
-If successful, you'll see output similar to:
+On success, you will see output similar to:
 
 ```
 Make request...
@@ -76,29 +74,76 @@ Upload encrypted secret to gateways https://01.functions-gateway.testnet.chain.l
 ✅ Secrets uploaded properly to gateways!
 Gateways response: { version: 1739510832, success: true }
 
-donHostedSecretsVersion is 1739510832, Saved info to donSecretsInfo.txt
+donHostedSecretsVersion is 1739510832, saved info to donSecretsInfo.txt
 ```
 
-The secret version is saved in the file `donSecretsInfo.txt`.
-
-> ⏳ The secret will expire in **24 hours**. If you need to update it before expiration, simply run the command again — the old secret will be overwritten.
-
-
-
----
-and add your data from donSecretsInfo.txt to the path : src/custom-plugins/actions/gift/config/GiftContractConfig.ts: 
-
-```bash
- static createSepoliaConfig(): GiftContractConfig {
-        const contractAddress: `0x${string}` = "";
-        const donHostedSecretsSlotID = ;
-        const donHostedSecretsVersion = ;
-        const subscriptionId = ;
-```
+> **Important:** The secret expires after 24 hours. To update before expiration, simply rerun the script. The previous secret will be overwritten.
 
 ---
 
-Run Agent by using 
+### 5. Update Contract Configuration
+
+Copy the values from `donSecretsInfo.txt` and update the file at:
+
+```
+src/custom-plugins/actions/gift/config/GiftContractConfig.ts
+```
+
+Set the following parameters accordingly:
+
+```typescript
+static createSepoliaConfig(): GiftContractConfig {
+    const contractAddress: `0x${string}` = "";
+    const donHostedSecretsSlotID = ;
+    const donHostedSecretsVersion = ;
+    const subscriptionId = ;
+}
+```
+
+---
+
+## Running the Agent
+
+Start the agent with:
+
 ```bash
 pnpm start
 ```
+
+Upon successful startup, you will see logs confirming:
+
+* Environment initialization
+* Services registration (e.g., browser, image description, text generation)
+* Agent and room creation
+* User creation and linkage to the agent
+
+Example snippet from logs:
+
+```
+[ElizaLogger] Initializing with:
+    isNode: true
+    verbose: false
+    NODE_ENV: undefined
+
+✓ SUCCESS  
+Creating runtime for character Eliza  
+✓ Registering action: get gift  
+...
+
+✓ User Eliza created successfully.  
+✓ Service text_generation initialized successfully  
+...
+
+◎ Chat started. Type 'exit' to quit.
+```
+
+You can interact with the agent by typing commands after the prompt:
+
+```
+You: hey how are you
+```
+
+---
+
+If you need any further assistance, feel free to ask.
+
