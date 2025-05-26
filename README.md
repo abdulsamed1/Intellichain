@@ -41,6 +41,11 @@ We’ve prepared a GitHub repository for today’s demo, which includes all the 
 git clone -b for-sepolia https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
 
+or 
+```bash
+git clone https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
+```
+
 ### 2. Install Dependencies
 
 ```bash
@@ -77,3 +82,23 @@ donHostedSecretsVersion is 1739510832, Saved info to donSecretsInfo.txt
 The secret version is saved in the file `donSecretsInfo.txt`.
 
 > ⏳ The secret will expire in **24 hours**. If you need to update it before expiration, simply run the command again — the old secret will be overwritten.
+
+
+
+---
+and add your data from donSecretsInfo.txt to the path : src/custom-plugins/actions/gift/config/GiftContractConfig.ts: 
+
+```bash
+ static createSepoliaConfig(): GiftContractConfig {
+        const contractAddress: `0x${string}` = "";
+        const donHostedSecretsSlotID = ;
+        const donHostedSecretsVersion = ;
+        const subscriptionId = ;
+```
+
+---
+
+Run Agent by using 
+```bash
+pnpm start
+```
