@@ -41,7 +41,7 @@ define check_var
 endef
 
 define call_contract
-	@cast call $(1) "$(2)" $(3) --rpc-url $(TestNet)
+	@cast call $(1) "$(2)" $(3) --rpc-url $(SEPOLIA_RPC_URL)
 endef
 
 # --------------------------
@@ -169,7 +169,7 @@ deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 deploy: ## Deploy to testnet live network	
 	@echo "🚀 Starting Deploy on testnet live network..."
 	@forge script $(CONTRACT_NAME) \
-		--rpc-url $(TestNet) \
+		--rpc-url $(SEPOLIA_RPC_URL) \
 		--private-key $(PRIVATE_KEY) \
 		--broadcast \
 
@@ -187,7 +187,7 @@ send: check-network check-keystore check-contract  ## Send transaction
 	@echo "📤 Sending transaction..."
 	@cast send $(CONTRACT_ADDRESS) "$(FUNCTION)" \
 		--rpc-url $(TestNet) \
-		--keystore $(KEYSTORE_PASSWORD) \
+		--keystore $(PRIVATE_KEY) \
 		--value $(VALUE) \
 		--legacy
 
