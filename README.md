@@ -107,7 +107,7 @@ static createSepoliaConfig(): GiftContractConfig {
 Start the agent with:
 
 ```bash
-pnpm start
+pnpm i && pnpm build && pnpm start
 ```
 
 Upon successful startup, you will see logs confirming:
