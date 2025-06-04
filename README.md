@@ -50,7 +50,7 @@ git clone https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 
 ```bash
 cd Eliza-Chainlink-Functions
-pnpm install
+pnpm i && pnpm build && pnpm start
 ```
 
 ### 3. Configure Environment Variables
