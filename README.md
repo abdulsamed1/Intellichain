@@ -55,8 +55,10 @@ pnpm i && pnpm build && pnpm start
 
 ### 3. Configure Environment Variables
 
-Edit the `.env` file to add your necessary environment variables (e.g., Supabase keys).
+Edit the `.env` file to add your necessary environment variables (e.g., Supabase keys,ai model).
 
+You must get api key from this link 
+[OPEN ROUTER](https://openrouter.ai/settings/keys)
 ### 4. Encrypt and Upload Your Secret
 
 Run the script to encrypt and upload your Supabase API key to the DON:
@@ -140,7 +142,7 @@ Creating runtime for character Eliza
 You can interact with the agent by typing commands after the prompt:
 
 ```
-You: hey how are you
+You: hi give me the gift at wallet address :0xCeC7338eecf7D17aE5714F10c36DD9caC1D50646 ,my gift code is:hTXcVopv1Wov
 ```
 
 ---
