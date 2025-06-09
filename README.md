@@ -41,7 +41,7 @@ make verify
 ###  Add Addresses to Allow List (if needed)
 
 ```bash
-forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "addToAllowList(address,address)" <getgift_contract_address> <address_to_add> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+make interact
 ```
 
 ###  Add Custom Gift Types (if needed)
