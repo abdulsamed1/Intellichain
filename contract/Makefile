@@ -87,7 +87,7 @@ test: check-network  ## Run basic tests
 
 test-fork: check-network  ## Run tests on forked network
 	@echo "🧪 Running tests on forked network..."
-	@forge test -vvv --fork-url $(Mainnet) --ffi
+	@forge test -vvv --fork-url $(MAINNET_RPC_URL) --ffi
 
 test-func:  ## Run specific test 
 	@echo "🧪 Running test on function..."
@@ -123,12 +123,12 @@ anvil: ## Start Anvil node
 	@sleep 2
 	@echo "✅ Anvil is running..."
 
-# Start an Anvil node with mainnet forking
+# Start an Anvil node with MAINNET_RPC_URL forking
 anvil-fork: ## Start Anvil node with fork
 	@echo "⏳ Stopping any running Anvil instances..."
 	@pkill -9 anvil || true
 	@echo "🚀 Starting Anvil Fork node..."
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) &
 	@sleep 2
 	@echo "✅ Anvil Fork is running..."
 
@@ -145,7 +145,7 @@ node: ## Start local node
 deploy-fork: ## Start Anvil Fork and Deploy Contract
 	@echo "🚀 Starting Anvil Fork for deployment..."
 	@pkill -9 anvil || true
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) &
 	@sleep 30
 	@echo "📜 Deploying Contract..."
 	@forge script $(CONTRACT_NAME) \
@@ -156,7 +156,7 @@ deploy-fork: ## Start Anvil Fork and Deploy Contract
 # Start an Anvil Fork at a specific block to reduce Infura requests and deploy a contract
 deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 	@echo "🚀 Starting Anvil Fork for deployment at a specific block..."
-	@anvil --mnemonic $(MNEMONIC) --fork-url $(Mainnet) --fork-block-number 21954976 &
+	@anvil --mnemonic $(MNEMONIC) --fork-url $(MAINNET_RPC_URL) --fork-block-number 21954976 &
 	@sleep 30
 	@echo "📜 Deploying Contract..."
 	@forge script ${CONTRACT_NAME} \
@@ -297,8 +297,8 @@ trace: check-network  ## Trace transaction
 	@echo "🔍 Tracing transaction..."
 	@cast trace $(TX_HASH) --rpc-url $(SEPOLIA_RPC_URL) --steps --verbose
 
-fork-cheatcodes: check-network  ## Access mainnet state
-	@echo "🌐 Accessing mainnet state via fork cheatcodes..."
+fork-cheatcodes: check-network  ## Access MAINNET_RPC_URL state
+	@echo "🌐 Accessing MAINNET_RPC_URL state via fork cheatcodes..."
 	@forge script --fork-url $(SEPOLIA_RPC_URL) --sig "run(address)" $(CHEAT_ADDRESS)
 
 # --------------------------
