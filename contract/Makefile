@@ -64,7 +64,7 @@ clean:  ## Clean build artifacts and dependencies
 install:  ## Install dependencies via Git submodules
 	@echo "📦 Installing project dependencies using Git submodules..."
 	@git submodule init
-	@git submodule update --recursive --remote --force
+	@git submodule update --recursive --depth 1
 	@forge install
 
 update:  ## Update all submodules
