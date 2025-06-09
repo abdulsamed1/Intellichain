@@ -30,7 +30,7 @@ This will:
 
 Save the deployed contract address for future interactions.
 
-###   Verify The Contract after deploy contract
+##   Verify The Contract after deploying the contract (necessary)
 
 ```bash
 cd contract
@@ -38,7 +38,7 @@ make verify
 ```
 
 
-###  Add Addresses to Allow List (if needed)
+##  Add Addresses to Allow List (necessary)
 
 ```bash
 make interact
