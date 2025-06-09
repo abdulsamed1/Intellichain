@@ -1,15 +1,14 @@
 # Deployment and Interaction Guide
 
-This guide explains how to use the Foundry scripts to deplo andd interact with the GetGift contract.
+This guide explains how to use the Foundry scripts to deplo andd interact with the GetGift [contract](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135)
 
-## Prerequisites
+# Prerequisites
 
 1. Foundry installed (forge, cast, anvil)
 2. make sure your env is used to set environment variables for the contract example
 
-
+---
 - get your API key from https://etherscan.io/apidashboard
-
 - get your RPC URL from https://www.alchemy.com/
 - get your contract address from https://sepolia.etherscan.io/address/
 - get your wallet address from https://sepolia.etherscan.io/address/0xCe
@@ -17,7 +16,7 @@ This guide explains how to use the Foundry scripts to deplo andd interact with t
 
 ---
 
-###  Deploy the GetGift Contract
+#  Deploy the GetGift Contract
 
 ```bash
 cd contract
@@ -30,7 +29,7 @@ This will:
 
 Save the deployed contract address for future interactions.
 
-##   Verify The Contract after deploying the contract (necessary)
+#   Verify The Contract after deploying the contract (necessary)
 
 ```bash
 cd contract
@@ -38,12 +37,14 @@ make verify
 ```
 
 
-##  Add Addresses to Allow List (necessary)
+#  Add Addresses to Allow List (necessary)
 
 ```bash
 cd contract
 make interact
 ```
+
+---
 
 ###  Add Custom Gift Types (if needed)
 
