@@ -91,7 +91,7 @@ test-fork: check-network  ## Run tests on forked network
 
 test-func:  ## Run specific test 
 	@echo "🧪 Running test on function..."
-	@forge test --match-test $(FUNCTION_TEST) -vvv
+	@forge test --match-test $(FUNCTION) -vvv
 
 coverage:  ## 📊 Generate coverage report for GetGift.sol only
 	@echo "📊 Generating coverage report for GetGift.sol..."
@@ -164,7 +164,7 @@ deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 		--broadcast
 
 # --------------------------
-# Deployment & Interaction
+# Deployment & Verification
 # --------------------------
 deploy: ## Deploy to SEPOLIA_RPC_URL live network	
 	@echo "🚀 Starting Deploy on SEPOLIA_RPC_URL live network..."
@@ -200,12 +200,23 @@ create2: check-network check-keystore  ## Deploy with CREATE2
 	@echo "🚀 Deploying contract with CREATE2..."
 	@forge create2 $(CONTRACT_NAME) \
 		--rpc-url $(SEPOLIA_RPC_URL) \
-		--keystore $(KEYSTORE_PASSWORD) \
+		--keystore $(PRIVATE_KEY) \
 		--init-code-hash $(SALT)
 
 multisig: check-network  ## Generate multisig transaction
 	@echo "🔐 Generating multisig transaction..."
 	@cast mksig "$(FUNCTION)" $(ARGS)
+
+interact: check-network check-keystore check-contract check-address
+	@echo "📜 Interacting with contract ..."
+	forge script $(SCRIPT_FILE) \
+		--sig "$(FUNCTION)" \
+		$(CONTRACT_ADDRESS) $(WALLET_ADDRESS) \
+		--rpc-url $(SEPOLIA_RPC_URL) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast
+	@echo "✅ Script executed successfully."
+
 
 # --------------------------
 # Chain Inspection
@@ -308,7 +319,7 @@ check-network:
 	$(call check_var,SEPOLIA_RPC_URL)
 
 check-keystore:
-	$(call check_var,KEYSTORE_PASSWORD)
+	$(call check_var,PRIVATE_KEY)
 
 check-contract:
 	$(call check_var,CONTRACT_ADDRESS)

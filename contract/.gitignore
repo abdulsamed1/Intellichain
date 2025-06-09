@@ -12,6 +12,6 @@ broadcast/
 
 # Docs
 docs/
-
+mnemonic.txt
 # Dotenv file
 #.env
