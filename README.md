@@ -41,6 +41,7 @@ make verify
 ##  Add Addresses to Allow List (necessary)
 
 ```bash
+cd contract
 make interact
 ```
 
