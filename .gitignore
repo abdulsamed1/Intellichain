@@ -1,0 +1,15 @@
+# Compiler files
+cache/
+out/
+lib/
+bin/
+contract/
+
+
+# Ignores development broadcast logs
+broadcast/
+
+
+
+# Dotenv file
+.env
