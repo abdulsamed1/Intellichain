@@ -45,8 +45,8 @@ Alternatively:
 ```bash
 git clone https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
-
 ### 2. Install Dependencies
+- Prerequisites: you must running this step first [add your address wallet to addToAllowList at the main contract](https://github.com/abdulsamed1/Intellichain/blob/Script/README.md#add-custom-gift-types-if-needed)
 
 ```bash
 cd Eliza-Chainlink-Functions
