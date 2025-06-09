@@ -11,9 +11,10 @@ WALLET_ADDRESS=0xCeC733
 # Replace with your actual wallet address
 PRIVATE_KEY=0xf5
 # Replace with your actual private key
-CONTRACT_NAME=GetGift
+
 # Replace with your actual contract name
-SCRIPT_FILE=script/InteractWithGetGift.s.sol:InteractWithGetGift
 # Replace with your actual interaction file name
-FUNCTION=addToAllowList(address,address)
 # Replace with the actual function you want to call
+CONTRACT_NAME=src/GetGift.sol:GetGift
+SCRIPT_FILE=script/InteractWithGetGift.s.sol:InteractWithGetGift
+FUNCTION="addToAllowList(address,address)" 
