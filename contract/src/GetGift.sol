@@ -40,9 +40,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     string constant ITEM_3_METADATA = "ipfs://QmNxq7GqehZf9SpCEFK7C4moxZTZPNwCer5yCAqCBNdk2a";
 
     // Hardcode for Sepolia testnet
-    address public constant ROUTER_ADDR = 0x046B6d106a4a05b8B575f2B383d7F3A67f3c8b6B;
+    address public constant ROUTER_ADDR = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0;
 
-    bytes32 public constant DON_ID = hex"7c2627179c14ab9e6337b678476c2c4c5e4a3b95b3913b364266cfa96a74c1ea"; // Replace with your DON ID
+    bytes32 public constant DON_ID = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; // Replace with your DON ID
 
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
@@ -51,20 +51,13 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
     // TABLE_NAME is the name of table created in step 1.
     // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
-    string public constant SOURCE =
-        "const giftCode = args[0];"
-        'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };'
-        "const apikey = secrets.apikey;"
+
+    string public constant SOURCE = "const giftCode = args[0];"
+        'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
-        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",'
-        'method: "GET",'
-        'headers: { "apikey": apikey}'
-        "});"
-        "if (apiResponse.error) {"
-        "console.error(apiResponse.error);"
-        'throw Error("Request failed: " + apiResponse.message);'
-        "};"
-        "const { data } = apiResponse;"
+        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
+        'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {" "console.error(apiResponse.error);"
+        'throw Error("Request failed: " + apiResponse.message);' "};" "const { data } = apiResponse;"
         "const item = data.find(item => item.gift_code == giftCode);"
         'if(item == undefined) {return Functions.encodeString("not found")};'
         "return Functions.encodeString(item.gift_name);";
