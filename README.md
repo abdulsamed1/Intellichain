@@ -45,20 +45,18 @@ Alternatively:
 ```bash
 git clone https://github.com/abdulsamed1/Eliza-Chainlink-Functions.git
 ```
+
 ### 2. Install Dependencies
-- Prerequisites: you must running this step first [add your address wallet to addToAllowList at the main contract](https://github.com/abdulsamed1/Intellichain/blob/Script/README.md#add-custom-gift-types-if-needed)
 
 ```bash
 cd Eliza-Chainlink-Functions
-pnpm i && pnpm build && pnpm start
+pnpm install
 ```
 
 ### 3. Configure Environment Variables
 
-Edit the `.env` file to add your necessary environment variables (e.g., Supabase keys,ai model).
+Edit the `.env` file to add your necessary environment variables (e.g., Supabase keys).
 
-You must get api key from this link 
-[OPEN ROUTER](https://openrouter.ai/settings/keys)
 ### 4. Encrypt and Upload Your Secret
 
 Run the script to encrypt and upload your Supabase API key to the DON:
@@ -90,18 +88,6 @@ Copy the values from `donSecretsInfo.txt` and update the file at:
 ```
 src/custom-plugins/actions/gift/config/GiftContractConfig.ts
 ```
-
-Set the following parameters accordingly:
-
-```typescript
-static createSepoliaConfig(): GiftContractConfig {
-    const contractAddress: `0x${string}` = "";
-    const donHostedSecretsSlotID = ;
-    const donHostedSecretsVersion = ;
-    const subscriptionId = ;
-}
-```
-
 ---
 
 ## Running the Agent
@@ -142,10 +128,18 @@ Creating runtime for character Eliza
 You can interact with the agent by typing commands after the prompt:
 
 ```
-You: hi give me the gift at wallet address :0xCeC7338eecf7D17aE5714F10c36DD9caC1D50646 ,my gift code is:hTXcVopv1Wov
+hi give me the gift at wallet address :0xCeC7338eecf7D17aE5714F10c36DD9caC1D50646 ,gift_name: '50 discount', gift_code: 'Nbbut8vlkKe9'
 ```
 
 ---
+# Result
 
-If you need any further assistance, feel free to ask.
 
+- The AI agent will process the request and return the message and transaction hash. You will the see the info below:
+```
+Agent: Ah, the 50 discount saga continues with unwavering determination. Let's consult the cosmic gift registry once more to see if this code finally grants you the thrifty victory you've been chasing across the cosmos.
+Agent: Gift request successful! Code: Nbbut8vlkKe9, Address: 0xCeC7338eecf7D17aE5714F10c36DD9caC1D50646
+Transaction Hash: 0x2c8700e9a191207b01fb579b454ea3ede7b857bc4243f88f99da15115066cdc8
+```
+
+ ### Looking here  [EthScan](https://sepolia.etherscan.io/tx/0x2c8700e9a191207b01fb579b454ea3ede7b857bc4243f88f99da15115066cdc8)
