@@ -178,6 +178,9 @@ verify: check-network check-contract  ## Verify deployed contract
 	@echo "🔍 Verifying deployed contract..."
 	@forge verify-contract $(CONTRACT_ADDRESS) $(CONTRACT_NAME) \
 		--etherscan-api-key $(ETHERSCAN_API_KEY) \
+		--rpc-url $(SEPOLIA_RPC_URL) \
+		--chain-id 11155111 \
+		--watch \
 		-vvvv
 
 # --------------------------
@@ -210,7 +213,7 @@ multisig: check-network  ## Generate multisig transaction
 interact: check-network check-keystore check-contract check-address
 	@echo "📜 Interacting with contract ..."
 	forge script $(SCRIPT_FILE) \
-		--sig "$(FUNCTION)" \
+		--sig $(FUNCTION) \
 		$(CONTRACT_ADDRESS) $(WALLET_ADDRESS) \
 		--rpc-url $(SEPOLIA_RPC_URL) \
 		--private-key $(PRIVATE_KEY) \

@@ -42,7 +42,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     // Hardcode for Sepolia testnet
     address public constant ROUTER_ADDR = 0x046B6d106a4a05b8B575f2B383d7F3A67f3c8b6B;
 
-    bytes32 public constant DON_ID = hex"7c2627179c14ab9e6337b678476c2c4c5e4a3b95b3913b364266cfa96a74c1ea"; // Replace with your DON ID
+    bytes32 public constant DON_ID = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; // Replace with your DON ID
 
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
@@ -51,7 +51,8 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
     // TABLE_NAME is the name of table created in step 1.
     // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
-    string public constant SOURCE =
+  
+  string public constant SOURCE =
         "const giftCode = args[0];"
         'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };'
         "const apikey = secrets.apikey;"
@@ -69,6 +70,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         'if(item == undefined) {return Functions.encodeString("not found")};'
         "return Functions.encodeString(item.gift_name);";
 
+
     constructor() FunctionsClient(ROUTER_ADDR) ERC721("Gift", "GT") {
         allowList[msg.sender] = true;
         giftToTokenUri[ITEM_1] = ITEM_1_METADATA;
@@ -80,7 +82,8 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
      * @notice Send a simple request
      * @param subscriptionId Billing ID
      */
-    function sendRequest(
+    
+      function sendRequest(
         uint8 donHostedSecretsSlotID,
         uint64 donHostedSecretsVersion,
         string[] memory args,
@@ -94,11 +97,18 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(SOURCE);
-        if (donHostedSecretsVersion > 0) {
-            req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
-        }
+        if (donHostedSecretsVersion > 0)
+            req.addDONHostedSecrets(
+                donHostedSecretsSlotID,
+                donHostedSecretsVersion
+            );
         if (args.length > 0) req.setArgs(args);
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, CALLBACK_GAS_LIMIT, DON_ID);
+        s_lastRequestId = _sendRequest(
+            req.encodeCBOR(),
+            subscriptionId,
+            CALLBACK_GAS_LIMIT,
+            DON_ID
+        );
 
         reqIdToAddr[s_lastRequestId] = userAddr;
         reqIdToGiftCode[s_lastRequestId] = giftCode;

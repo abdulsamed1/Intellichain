@@ -51,8 +51,8 @@ library NetworkConfigLibrary {
                     router: address(0xb83E47C2bC239B3bf370bc41e1459A34b41238D0),
                     donId: bytes32(bytes("fun-ethereum-sepolia-1")),
                     callbackGasLimit: 250_000,
-                    linkToken: address(0x779877a7b0d9e8603169ddbd7836e478b4624789),
-                    subscriptionId: 4952
+                    linkToken: address(0x779877A7B0D9E8603169DdbD7836e478b4624789),
+                    subscriptionId: 4953
                 }),
                 true
             );
