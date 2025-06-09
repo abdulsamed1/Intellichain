@@ -1,0 +1,16 @@
+# Compiler files
+cache/
+out/
+lib/
+bin/
+Eliza-Chainlink-Functions/
+
+
+
+# Ignores development broadcast logs
+broadcast/
+
+
+
+# Dotenv file
+.env

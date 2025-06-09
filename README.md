@@ -1,38 +1,27 @@
 # Deployment and Interaction Guide
 
-This guide explains how to use the Foundry scripts to deploy and interact with the GetGift contract.
+This guide explains how to use the Foundry scripts to deplo andd interact with the GetGift contract.
 
 ## Prerequisites
 
 1. Foundry installed (forge, cast, anvil)
-2. Chainlink Functions subscription (for testnet deployment)
-3. Supabase API key (for database interaction)
+2. make sure your env is used to set environment variables for the contract example
 
-## Setup
 
-1. Create your Supabase database with a `Gifts` table containing columns:
-   - `gift_code`: The unique code to redeem a gift
-   - `gift_name`: The name/type of the gift (must match one of the gift types in the contract)
+- get your API key from https://etherscan.io/apidashboard
 
-2. Ensure your Foundry.toml file has the correct remappings:
+- get your RPC URL from https://www.alchemy.com/
+- get your contract address from https://sepolia.etherscan.io/address/
+- get your wallet address from https://sepolia.etherscan.io/address/0xCe
+- get your private key :(https://awesamarth.hashnode.dev/the-best-way-to-import-your-private-key-in-foundry)
 
-```toml
-[profile.default]
-src = "src"
-out = "out"
-libs = ["lib"]
-remappings = [
-    "@chainlink/=lib/chainlink/",
-    "@openzeppelin/=lib/openzeppelin-contracts/"
-]
-```
+---
 
-## Script Usage
-
-### 1. Deploy the GetGift Contract
+###  Deploy the GetGift Contract
 
 ```bash
-forge script script/DeployGetGift.s.sol --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+cd contract
+make deploy
 ```
 
 This will:
@@ -41,58 +30,27 @@ This will:
 
 Save the deployed contract address for future interactions.
 
-### 2. Create Chainlink Functions Subscription (if not already created)
+###   Verify The Contract after deploy contract
 
 ```bash
-forge script script/CreateSubscription.s.sol:CreateSubscription --sig "createSubscription()" --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+cd contract
+make verify
 ```
 
-Save the subscription ID output from this command.
 
-### 3. Fund the Subscription
-
-```bash
-forge script script/CreateSubscription.s.sol:CreateSubscription --sig "fundSubscription(uint64,uint96)" <subscription_id> <amount_in_juels> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
-```
-
-Example to fund with 1 LINK:
-```bash
-forge script script/CreateSubscription.s.sol:CreateSubscription --sig "fundSubscription(uint64,uint96)" 123 1000000000000000000 --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
-```
-
-### 4. Add Contract as Consumer to Subscription
-
-```bash
-forge script script/CreateSubscription.s.sol:CreateSubscription --sig "addConsumer(uint64,address)" <subscription_id> <getgift_contract_address> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
-```
-
-### 5. Upload Secrets to DON (Decentralized Oracle Network)
-
-For this step, you'll need to use the Chainlink Functions CLI:
-
-```bash
-npx hardhat functions-upload-secrets --network <network_name> --slot <slot_id> --environment <environment_name>
-```
-
-To generate the required JSON file:
-
-```bash
-forge script script/UploadSecrets.s.sol:UploadSecrets --sig "createSecretsJsonFile(string)" <your_supabase_api_key> --rpc-url <your_rpc_url>
-```
-
-### 6. Add Addresses to Allow List (if needed)
+###  Add Addresses to Allow List (if needed)
 
 ```bash
 forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "addToAllowList(address,address)" <getgift_contract_address> <address_to_add> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
 ```
 
-### 7. Add Custom Gift Types (if needed)
+###  Add Custom Gift Types (if needed)
 
 ```bash
 forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "addGift(address,string,string)" <getgift_contract_address> "New Gift Name" "ipfs://your-ipfs-cid" --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
 ```
 
-### 8. Redeem a Gift Code
+###  Redeem a Gift Code
 
 ```bash
 forge script script/InteractWithGetGift.s.sol:InteractWithGetGift --sig "redeemGiftCode(address,string,uint8,uint64)" <getgift_contract_address> "GIFT123" <slot_id> <secrets_version> --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
@@ -103,31 +61,18 @@ Replace:
 - `<slot_id>` with the DON secrets slot ID
 - `<secrets_version>` with the DON secrets version
 
-### 9. Check Response and NFT Minting Status
+###  Check Response and NFT Minting Status
 
 ```bash
 forge script script/DecodeResponse.s.sol:DecodeResponse --sig "decodeLastResponse(address)" <getgift_contract_address> --rpc-url <your_rpc_url>
 ```
 
-### 10. View Token Information
+###  View Token Information
 
 ```bash
 forge script script/DecodeResponse.s.sol:DecodeResponse --sig "getTokenInfo(address,uint256)" <getgift_contract_address> <token_id> --rpc-url <your_rpc_url>
 ```
 
-## Testing with Anvil (Local Development)
-
-For local testing, start Anvil:
-
-```bash
-anvil
-```
-
-Then deploy and interact with your contract using the Anvil RPC URL:
-
-```bash
-forge script script/DeployGetGift.s.sol --rpc-url http://localhost:8545 --private-key <anvil_private_key> --broadcast
-```
 
 ## Troubleshooting
 
@@ -149,130 +94,6 @@ forge script script/DeployGetGift.s.sol --rpc-url http://localhost:8545 --privat
 
    ---
 
----
-
-
-
-
-# Private Key Management
----
-
-### 📌 **What it is:**
-
-You're trying to **store and reuse** your private key (in this case, derived from a mnemonic) so that you can **deploy contracts**, **send transactions**, and perform **Cast CLI** interactions **without manually pasting the key each time**.
-
----
-
-### 💡 Why it Matters:
-
-- Avoids repeated exposure of your mnemonic/private key in the terminal.
-- Enables **cleaner scripting and automation** with `cast` and `forge`.
-- Supports **secure, modular configuration** when working in multiple environments (dev/testnet/mainnet).
-
----
-
-### ⚙️ How it Works:
-
-There are **3 main approaches** to store and use your private key securely with Foundry tools:
-
----
-
-## 🧰 Option 1: Use Environment Variables (Recommended for Dev Use)
-
-### ✅ Steps:
-
-1. **Convert mnemonic to private key**:
-    
-    You already did this using:
-    
-    ```bash
-    cast wallet private-key "plaa plaaa plaa plaa plaa plaaa plaa plaa plaa plaa plaa plaa"
-    
-    ```
-    
-    Example output:
-    
-    ```
-    0xb56ec547de376c780c44cc9eb753066b4312rbb17fa3b587aed4c72e2f573872
-    
-    ```
-    
-2. **Export it as an environment variable**:
-    
-    ```bash
-    export PRIVATE_KEY=0xb56ec547de376c780c44cc9eb753066b4312rbb17fa3b587aed4c72e2f573872
-    
-    ```
-    
-3. Now you can use this key for:
-    
-    ```bash
-    cast send --private-key $PRIVATE_KEY ...
-    forge create --private-key $PRIVATE_KEY ...
-    
-    ```
-    
-
-💬 You can also add it to your `.bashrc`, `.zshrc`, or `.env` file (with caution):
-
-```bash
-echo 'export PRIVATE_KEY=0x...' >> ~/.zshrc
-
-```
-
-📦 *Memory Tip:* Think of this like keeping a **keycard in your wallet**. You just tap to open doors (interact with contracts), without showing it every time.
-
----
-
-## 🔏 Option 2: Use a `.env` File (Best for Scripts & Project-Wide Config)
-
-Create a `.env` file in your project root:
-
-```
-PRIVATE_KEY=0xb56ec...
-
-```
-
-Then, Foundry tools like `forge` and `cast` can pick it up automatically if you run with `dotenv`:
-
-```bash
-source .env
-
-```
-
-or use `dotenv` package in scripting tools (e.g., bash, js, or foundry scripting environments).
-
----
-
-## 🔒 Option 3: Use a `foundry.toml` Wallet Profile (Persistent Configuration)
-
-You can also configure Foundry to automatically pick a key by adding a `profile` in your `foundry.toml`.
-
-### Example:
-
-```toml
-[rpc_endpoints]
-mainnet = "https://mainnet.infura.io/v3/YOUR_KEY"
-
-[wallets.default]
-private_key = "0xb56ec..."
-
-```
-
-⚠️ Don’t commit `foundry.toml` with private keys to version control! Use `.gitignore`.
-
----
-
-### 🧱 Common Pitfalls to Avoid:
-
-| ❌ Mistake | ✅ Solution |
-| --- | --- |
-| Putting mnemonic in `foundry.toml` | Always use **private key** only |
-| Committing `.env` or `toml` files | Add them to `.gitignore` |
-| Reusing same key across networks | Use **separate keys** for safety |
-| Using raw mnemonic in scripts | Convert to **private key** first |
-
----
 
 ### 🛡️ Real-World Use Case:
 
