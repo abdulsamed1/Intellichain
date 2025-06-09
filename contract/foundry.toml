@@ -5,6 +5,7 @@ libs = ["lib"]
 auto_detect_remappings = true
 optimizer = true
 optimizer_runs = 20000
+solc_version = "0.8.19"
 
 # Cache settings
 cache = true
