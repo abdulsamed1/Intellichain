@@ -1,6 +1,5 @@
 # Eliza-Chainlink-Functions
 
-![Architecture Diagram](img/image1.webp)
 
 
 ## Overview
@@ -11,6 +10,10 @@ The agent enables users to provide a gift code and their wallet address to mint 
 
 The agent integrates with [Chainlink Functions](https://docs.chain.link/chainlink-functions) through custom actions for seamless on-chain interactions.
 
+---
+
+
+![Architecture Diagram](img/image2.webp)
 
 
 ---
@@ -83,6 +86,13 @@ donHostedSecretsVersion is 1739510832, saved info to donSecretsInfo.txt
 > **Important:** The secret expires after 24 hours. To update before expiration, simply rerun the script. The previous secret will be overwritten.
 
 ---
+
+![Architecture Diagram](img/image1.webp)
+
+---
+
+
+
 
 ### 5. Update Contract Configuration
 
