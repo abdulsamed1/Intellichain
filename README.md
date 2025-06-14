@@ -29,15 +29,16 @@ Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza A
 Use the docker image. It includes our project in a single image. /home/share will be mounted to /share in the container.
 
 ```bash
-docker pull ????????????????
+cd /home/youruser/your-project-directory
+docker build -t intellichain:latest.
 ```
 
 ###To share a directory in the container:
 ```bash
-docker run -it -v /home/share:/share image ????????????
+docker run -it --rm -v "$(pwd)":/app /intellichain:latest bash
 ```
 
-Installing dependencies for the contract :
+Installing the contract dependents:
 
 ```bash
 cd contract
