@@ -1,7 +1,13 @@
 # 🧠 Final Report ![GitHub Language](https://img.shields.io/badge/language-Solidity-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Last Commit](https://img.shields.io/github/last-commit/your-username/your-repo.svg) ![Audit Status](https://img.shields.io/badge/audit-pending-yellow.svg)
 
+
 ---
 
+## Tech Stack 
+
+* **Testing**: [Foundry](https://getfoundry.sh/)
+* **Security Auditing**: [Slither](https://github.com/crytic/slither) + [CyfrinUp](https://github.com/Cyfrin/up)
+---
 
 ## 🔗 References
 
