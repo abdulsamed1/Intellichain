@@ -9,7 +9,7 @@
 
    * User replies to a tweet with their wallet address and a claim code.
 
-2. **AI Agent — [ElizaOS](https://github.com/eliza-ai/elizaos)**
+2. **AI Agent — [ElizaOS](https://github.com/elizaOS/eliza)**
 
    * Parses tweet to extract the wallet and code.
    * Validates user intent (e.g., claiming a gift).
