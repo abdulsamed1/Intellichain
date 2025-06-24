@@ -52,6 +52,10 @@ make install
 
 ---
 
+- **Browse the rest of the project branches to see the Auditing, testing, and deployment stages.**
+
+---
+
 ## ✅ Use Cases
 - Marketing campaigns: Reward users who engage with tweets.
 - Event ticketing: Issue NFTs based on RSVP codes.
