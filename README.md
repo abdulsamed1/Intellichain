@@ -14,29 +14,16 @@
    * Parses tweet to extract the wallet and code.
    * Validates user intent (e.g., claiming a gift).
 
-3. **Chainlink Functions**
-
+3. [Chainlink Functions](https://functions.chain.link/)
    * Securely calls Supabase to check if the code is valid and unused.
 
-4. **Smart Contract (on Sepolia Testnet)**
-
+4. [Smart Contract Deployed on Sepolia](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135) (minting and validation)
    * Receives data from Chainlink.
    * Mints a gift token (NFT) if validation passes.
 
 5. **User Receives Gift**
 
    * NFT or gift token is sent directly to the wallet.
-
----
-
-### 🧩 Tech Stack
-
-* **AI Agent**: [ElizaOS](https://github.com/eliza-ai/elizaos)
-* **Data Storage**: [Supabase](w) (for gift codes)
-* **Off-chain Logic**: [Chainlink Functions](https://functions.chain.link/)
-* **On-chain Logic**: [Smart Contract](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135) (minting and validation)
-* **Testing Framework**: [Foundry](https://getfoundry.sh/)
-* **Security Auditing**: [Slither](https://github.com/crytic/slither) + [CyfrinUp](https://github.com/Cyfrin/up)
 
 
 ---
