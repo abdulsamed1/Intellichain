@@ -1,24 +1,42 @@
+## 🏗️ Workflow Summary
+
+![System Diagram](img/image.jpg)
+
+
+### 🛠 System Diagram
+
+1. **User Tweet Reply**
+
+   * User replies to a tweet with their wallet address and a claim code.
+
+2. **AI Agent — [ElizaOS](https://github.com/eliza-ai/elizaos)**
+
+   * Parses tweet to extract the wallet and code.
+   * Validates user intent (e.g., claiming a gift).
+
+3. **Chainlink Functions**
+
+   * Securely calls Supabase to check if the code is valid and unused.
+
+4. **Smart Contract (on Sepolia Testnet)**
+
+   * Receives data from Chainlink.
+   * Mints a gift token (NFT) if validation passes.
+
+5. **User Receives Gift**
+
+   * NFT or gift token is sent directly to the wallet.
+
 ---
-# 🧠 Overview
 
-Tweet2NFT AI Bridge lets users claim NFTs by replying to tweets. It uses Eliza AI, Supabase for codes, and Chainlink to mint. It combines Web2 social with Web3 blockchain for secure, scalable rewards.
+### 🧩 Tech Stack
 
----
-
-## 🏗️ Architecture
-
-![Architecture Diagram](img/image.jpg)
-
----
-
-## 📦 Tech Stack
-- **AI Agent**: [ElizaOS](https://github.com/eliza-ai/elizaos)
-- **LLM**: Qwen3-235B-A22B
-- **Database**: Supabase (PostgreSQL + API)
-- **Oracle Bridge**: Chainlink Functions DON
-- **Blockchain**: Sepolia Testnet
-- **Testing**: Foundry Toolkit
-- **Auditing**: Slither + Cyfrinup
+* **AI Agent**: [ElizaOS](https://github.com/eliza-ai/elizaos)
+* **Data Storage**: [Supabase](w) (for gift codes)
+* **Off-chain Logic**: [Chainlink Functions](https://functions.chain.link/)
+* **On-chain Logic**: [Smart Contract](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135) (minting and validation)
+* **Testing Framework**: [Foundry](https://getfoundry.sh/)
+* **Security Auditing**: [Slither](https://github.com/crytic/slither) + [CyfrinUp](https://github.com/Cyfrin/up)
 
 
 ---
@@ -51,16 +69,3 @@ make install
 - Marketing campaigns: Reward users who engage with tweets.
 - Event ticketing: Issue NFTs based on RSVP codes.
 - Gaming: Claim in-game items through social media.
-
----
-
-## 🛡️ Security Notes
-- All gift codes are stored and verified **off-chain** for privacy.
-- Smart contract uses access control to avoid abuse.
-- Chainlink ensures decentralized and verifiable execution.
-
----
-
-## 🔗 Links
-- [Eliza GitHub]([https://github.com/eliza-ai/elizaos](https://github.com/elizaOS/eliza))
-- [Chainlink Functions Docs]([https://docs.chain.link/functions](https://docs.chain.link/chainlink-functions))
