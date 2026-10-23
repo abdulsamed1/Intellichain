@@ -11,6 +11,9 @@ import {GetGift} from "../../src/GetGift.sol";
  * @notice Tests for request fulfillment functionality in GetGift contract
  */
 contract GetGiftFulfillmentTest is GetGiftBase {
+    // Mirror of the GetGift events asserted with vm.expectEmit (sig-matched)
+    event GiftRedeemed(bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId);
+    event GiftCodeReleased(string giftCode);
     /// @notice Test successful fulfillment with valid response
     function test_FulfillRequest_ValidResponse() public {
         vm.startPrank(owner);
@@ -137,6 +140,123 @@ contract GetGiftFulfillmentTest is GetGiftBase {
 
         vm.startPrank(ROUTER_ADDR);
         getGift.handleOracleFulfillment(requestId, response, error);
+        vm.stopPrank();
+    }
+
+    /// @notice Aggregation error at fulfillment must RELEASE the claimed code
+    /// so it can be requested again (it was claimed at request time)
+    function test_FulfillRequest_ReleasesCodeOnError() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        vm.startPrank(ROUTER_ADDR);
+        getGift.handleOracleFulfillment(requestId, new bytes(0), abi.encode("supabase error"));
+        vm.stopPrank();
+
+        // no NFT was minted
+        assertEq(getGift.tokenId(), 0);
+
+        // the same code can be requested again
+        vm.startPrank(user);
+        bytes32 retryId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        assertTrue(retryId != bytes32(0));
+        vm.stopPrank();
+    }
+
+    /// @notice An oracle "not found" answer must NOT mint and must release the code
+    function test_FulfillRequest_ReleasesCodeIfNotFound() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        vm.startPrank(ROUTER_ADDR);
+        getGift.handleOracleFulfillment(requestId, abi.encode("not found"), new bytes(0));
+        vm.stopPrank();
+
+        assertEq(getGift.tokenId(), 0);
+
+        vm.startPrank(user);
+        bytes32 retryId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        assertTrue(retryId != bytes32(0));
+        vm.stopPrank();
+    }
+
+    /// @notice A code validated by the oracle but with a gift name unknown to
+    /// the contract must not mint an empty-metadata token and must not lock
+    /// the code: it is released so admin can addGift and the user can retry
+    function test_FulfillRequest_NoMintForUnknownGiftType() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        vm.startPrank(ROUTER_ADDR);
+        getGift.handleOracleFulfillment(requestId, abi.encode("mystery gift"), new bytes(0));
+        vm.stopPrank();
+
+        assertEq(getGift.tokenId(), 0);
+
+        vm.startPrank(user);
+        bytes32 retryId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        assertTrue(retryId != bytes32(0));
+        vm.stopPrank();
+    }
+
+    /// @notice Successful redemption emits GiftRedeemed with full claim data
+    function test_FulfillRequest_EmitsGiftRedeemed() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        uint256 expectedTokenId = getGift.tokenId();
+        vm.startPrank(ROUTER_ADDR);
+        vm.expectEmit(true, true, true, true);
+        emit GiftRedeemed(requestId, user, validGiftCode, "100 discount", expectedTokenId);
+        bytes memory response = abi.encode("100 discount");
+        getGift.handleOracleFulfillment(requestId, response, new bytes(0));
+        vm.stopPrank();
+    }
+
+    /// @notice Releasing a claimed code emits GiftCodeReleased
+    function test_FulfillRequest_EmitsGiftCodeReleased() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        vm.startPrank(ROUTER_ADDR);
+        vm.expectEmit(true, true, true, true);
+        emit GiftCodeReleased(validGiftCode);
+        getGift.handleOracleFulfillment(requestId, new bytes(0), abi.encode("supabase error"));
         vm.stopPrank();
     }
 

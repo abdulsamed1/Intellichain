@@ -36,6 +36,8 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     error InvalidRecipient();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
+    event GiftRedeemed(bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId);
+    event GiftCodeReleased(string giftCode);
 
     // Gift codes and NFT metadata (saved on IPFS)
     mapping(bytes => string) giftToTokenUri;
@@ -137,6 +139,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         if (s_lastRequestId != requestId) {
             revert UnexpectedRequestID(requestId);
         }
+
         // this request is no longer awaiting fulfillment
         requestIdInFlight = false;
         s_lastResponse = response;
@@ -144,30 +147,53 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
 
         emit Response(requestId, s_lastResponse, s_lastError);
 
-        // check if the code is valid, incorrected code returns empty string
-        if (keccak256(response) == keccak256(abi.encode("not found"))) return;
+        // copy the fulfill bookkeeping we still need, then free the storage
+        // slots for the next request
+        address userAddr = reqIdToAddr[requestId];
+        string memory giftCode = reqIdToGiftCode[requestId];
+        delete reqIdToAddr[requestId];
+        delete reqIdToGiftCode[requestId];
 
-        // If no error, mint the NFT
-        if (err.length == 0) {
-            // response is not empty, giftCode is valid
-            address userAddr = reqIdToAddr[requestId];
-
-            // Decode the ABI-encoded response
-            string memory giftType = abi.decode(response, (string));
-            string memory tokenUri = giftToTokenUri[bytes(giftType)];
-
-            safeMint(userAddr, tokenUri);
-
-            // mark gift code is redeemed
-            // please be noticed that gift can only be redeemed once
-            string memory giftCode = reqIdToGiftCode[requestId];
-            giftCodeRedeemed[giftCode] = true;
+        // fulfillment failed: the code was claimed at request time, so release
+        // it — the code stays redeemable
+        if (err.length != 0) {
+            _releaseGiftCode(giftCode);
+            return;
         }
+
+        // the oracle says the code is unknown: release and claim nothing
+        if (keccak256(response) == keccak256(abi.encode("not found"))) {
+            _releaseGiftCode(giftCode);
+            return;
+        }
+
+        // Decode the response to the gift type
+        string memory giftType = abi.decode(response, (string));
+        string memory tokenUri = giftToTokenUri[bytes(giftType)];
+
+        // The oracle validated the code but the contract has no registered
+        // metadata for this gift type: do NOT mint an empty-metadata token;
+        // release the code so admin can addGift() and the user can retry
+        if (bytes(tokenUri).length == 0) {
+            _releaseGiftCode(giftCode);
+            return;
+        }
+
+        // All checks passed: mint the gift NFT and record the redemption
+        uint256 redeemedTokenId = safeMint(userAddr, tokenUri);
+        emit GiftRedeemed(requestId, userAddr, giftCode, giftType, redeemedTokenId);
     }
 
-    function safeMint(address to, string memory uri) internal nonReentrant {
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+    /// @dev Releases a claimed gift code (error / unknown-code / unknown-gift-type paths)
+    function _releaseGiftCode(string memory giftCode) internal {
+        giftCodeRedeemed[giftCode] = false;
+        emit GiftCodeReleased(giftCode);
+    }
+
+    function safeMint(address to, string memory uri) internal nonReentrant returns (uint256 tokenNumber) {
+        tokenNumber = tokenId;
+        _safeMint(to, tokenNumber);
+        _setTokenURI(tokenNumber, uri);
         tokenId++;
     }
 
