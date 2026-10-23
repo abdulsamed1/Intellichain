@@ -55,6 +55,74 @@ contract GetGiftRequestTest is GetGiftBase {
         vm.stopPrank();
     }
 
+    /// @notice RACE REGRESSION: the code is claimed atomically at REQUEST
+    /// time, so a second concurrent request with the same code cannot pass
+    /// while the first fulfillment is still pending (previously two requests
+    /// could both be fulfilled: double NFT mint for one code)
+    function test_SendRequest_ClaimsCodeAtRequestTime() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+
+        vm.expectRevert(GetGift.CodeAlreadyRedeemed.selector);
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+    }
+
+    /// @notice Only ONE Chainlink request may await fulfillment: a new request
+    /// is rejected until the previous one is fulfilled, otherwise the earlier
+    /// request would be orphaned and burn LINK with no callback
+    function test_SendRequest_RevertIfRequestAlreadyInFlight() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+
+        string[] memory otherArgs = new string[](1);
+        otherArgs[0] = "another code";
+        vm.expectRevert(GetGift.RequestAlreadyInFlight.selector);
+        getGift.sendRequest(1, 1, otherArgs, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+    }
+
+    /// @notice An empty gift code string must revert before a paid request is sent
+    function test_SendRequest_RevertIfEmptyGiftCode() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = "";
+        vm.expectRevert(GetGift.InvalidGiftCode.selector);
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+    }
+
+    /// @notice Minting to the zero address reverts in fulfillment, so sending
+    /// the paid request in the first place must be rejected
+    function test_SendRequest_RevertIfRecipientZero() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        vm.expectRevert(GetGift.InvalidRecipient.selector);
+        getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, address(0));
+        vm.stopPrank();
+    }
+
     /// @notice Test that request fails if args are empty
     function test_SendRequest_RevertIfEmptyArgs() public {
         vm.startPrank(owner);

@@ -24,10 +24,16 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     mapping(bytes32 => address) private reqIdToAddr;
     mapping(bytes32 => string) private reqIdToGiftCode;
     uint256 public tokenId;
+    /// @dev true while a Chainlink request awaits fulfillment: enforcing this
+    /// prevents orphaning an earlier request (its store entry never fulfills)
+    bool public requestIdInFlight;
 
     error UnexpectedRequestID(bytes32 requestId);
     error CallerNotAllowlisted();
     error CodeAlreadyRedeemed();
+    error RequestAlreadyInFlight();
+    error InvalidGiftCode();
+    error InvalidRecipient();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
@@ -87,9 +93,24 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         uint64 subscriptionId,
         address userAddr
     ) external onlyAllowList returns (bytes32 requestId) {
-        // make sure the code is redeemable
+        // validate before sending a PAID Functions request
+        if (args.length == 0) revert InvalidGiftCode();
         string memory giftCode = args[0];
+        if (bytes(giftCode).length == 0) revert InvalidGiftCode();
+        if (userAddr == address(0)) revert InvalidRecipient();
+
+        // make sure the code is redeemable: it is CLAIMED atomically here and
+        // released again in fulfillRequest if the code turns out unusable —
+        // two in-flight requests can therefore never both mint the same code
         if (giftCodeRedeemed[giftCode]) revert CodeAlreadyRedeemed();
+        giftCodeRedeemed[giftCode] = true;
+
+        // enforce the one-request-in-flight invariant: a second request while
+        // one awaits fulfillment would orphan the first (s_lastRequestId
+        // mismatch on its callback) and burn its LINK. Checked after the
+        // per-code claim so a duplicate code surfaces CodeAlreadyRedeemed.
+        if (requestIdInFlight) revert RequestAlreadyInFlight();
+        requestIdInFlight = true;
 
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
@@ -116,6 +137,8 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         if (s_lastRequestId != requestId) {
             revert UnexpectedRequestID(requestId);
         }
+        // this request is no longer awaiting fulfillment
+        requestIdInFlight = false;
         s_lastResponse = response;
         s_lastError = err;
 
