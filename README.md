@@ -39,15 +39,21 @@ On-chain invariants keep the system honest:
 │   ├── script/              # deployment, interaction, config helpers
 │   ├── test/unit/           # 55 offline unit tests (no RPC required)
 │   └── Makefile             # build / test / fmt / deploy / interact / verify
-├── .github/workflows/ci.yml # format → build → unit tests on every push/PR
+├── agent/                   # ElizaOS agent stage (its own pnpm workspace)
+│   ├── src/core/            # env pipeline, claim extraction, GetGift client, monitor
+│   ├── src/custom-plugins/  # GET_GIFT action + pure reply builders
+│   ├── src/twitter/         # vendored elizaOS starter twitter clients (MIT)
+│   └── Makefile             # typecheck / test / don-secrets / start
+├── .github/workflows/ci.yml # contract (forge) + agent (pnpm) gates per push/PR
 ├── Dockerfile + entrypoint.sh
 └── img/                     # system diagram
 ```
 
 The maturity stages were developed on separate branches and are **frozen there
 as historical snapshots**: `testing` (test-first stage), `Script`
-(deployment stage), `Agent` (the ElizaOS agent). Everything that matters is
-consolidated here on `main`.
+(deployment stage), `Agent` (the legacy ElizaOS agent). Everything that
+matters is consolidated here on `main` — the agent stage has been **rebuilt
+from scratch** against the hardened contract (see [`agent/`](agent/)).
 
 ## 🚀 Quickstart
 
@@ -89,6 +95,24 @@ is only consumed by `make verify` / `make abi`.
 > 🔁 The contract at [`0x3437c36913b3f2f18a71f63750d0a35fbd6b2135`](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135)
 > is the **original example deployment** — main has evolved beyond it and
 > needs a fresh deployment.
+
+## 🖥 Agent (ElizaOS)
+
+`agent/` is the stage that turns tweets into onchain claims: it watches
+mentions, extracts the claim **deterministically** (EIP-55-validated
+address + code mask — no LLM object generation in the claim path), submits
+`sendRequest` through the relayer, and tracks fulfillment to report
+**minted / released (retry) / still watching** in the same thread.
+
+```bash
+cd agent && make check   # offline: typecheck + 48-test suite, zero secrets
+```
+
+Everything private arrives via `agent/.env` only (RPC, dedicated relayer
+key, deployed address, Functions subscription, Twitter login, model key).
+Run `make don-secrets` there to upload the DON-hosted Supabase key — it
+writes back the slot/version, never the secret. The full runbook lives in
+[`agent/README.md`](agent/README.md).
 
 ## 🔗 Chainlink Functions: subscription & secrets
 
