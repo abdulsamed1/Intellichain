@@ -17,7 +17,13 @@ const MINIMAL_ENV: Env = {
   },
   relayer: { privateKey: ("0x" + "ab".repeat(32)) as `0x${string}` },
   contract: { address: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed" },
-  functions: { subscriptionId: 17n, slotId: 0, secretVersion: 1n },
+  functions: {
+    subscriptionId: 17n,
+    slotId: 0,
+    secretVersion: 1n,
+    fulfillmentTickMs: 15000,
+    fulfillmentMaxTicks: 60,
+  },
   model: {},
   serverPort: 3000,
 };

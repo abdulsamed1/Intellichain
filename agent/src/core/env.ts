@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NETWORKS, isNetworkName, normalizeAddress, type NetworkPreset } from "./networks.js";
+import { NETWORKS, isNetworkName, normalizeAddress, type NetworkPreset, type Address } from "./networks.js";
 
 /**
  * Thrown at boot when any environment configuration is missing or invalid.
@@ -34,6 +34,9 @@ export interface Env {
     subscriptionId: bigint;
     slotId: number;
     secretVersion: bigint;
+    /** Fulfillment monitor cadence + ceiling (env override pair). */
+    fulfillmentTickMs: number;
+    fulfillmentMaxTicks: number;
   };
   supabase?: { apiKey: string };
   twitter?: {
@@ -83,6 +86,16 @@ const schema = z
       .optional()
       .default("0"),
     FUNCTIONS_SECRET_VERSION: z.string().regex(DECIMAL, "must be a decimal integer").optional().default("0"),
+    FULFILLMENT_TICK_MS: z
+      .string()
+      .regex(DECIMAL, "must be a decimal number of milliseconds")
+      .optional()
+      .default("15000"),
+    FULFILLMENT_MAX_TICKS: z
+      .string()
+      .regex(DECIMAL, "must be a decimal number of poll ticks")
+      .optional()
+      .default("60"),
     SUPABASE_API_KEY: z.string().min(1).optional(),
     TWITTER_USERNAME: z.string().min(1).optional(),
     TWITTER_EMAIL: z.string().min(1).optional(),
@@ -166,6 +179,8 @@ export function loadEnv(source: EnvSource = process.env): Env {
       subscriptionId: BigInt(raw.FUNCTIONS_SUBSCRIPTION_ID),
       slotId: Number(raw.FUNCTIONS_SLOT_ID),
       secretVersion: BigInt(raw.FUNCTIONS_SECRET_VERSION),
+      fulfillmentTickMs: Number(raw.FULFILLMENT_TICK_MS),
+      fulfillmentMaxTicks: Number(raw.FULFILLMENT_MAX_TICKS),
     },
     supabase: raw.SUPABASE_API_KEY ? { apiKey: raw.SUPABASE_API_KEY } : undefined,
     // the twitter block exists whenever ANY twitter config is present; the

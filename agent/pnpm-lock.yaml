@@ -60,6 +60,9 @@ importers:
         specifier: 3.23.8
         version: 3.23.8
     devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^9.6.0
+        version: 9.6.0
       '@types/node':
         specifier: 22.10.2
         version: 22.10.2
@@ -2187,6 +2190,9 @@ packages:
 
   '@types/better-sqlite3@7.6.12':
     resolution: {integrity: sha512-fnQmj8lELIj7BSrZQAdBMHEHX8OZLYIHXqAKT1O7tDfLxaINzf00PMjw22r3N/xXh0w/sGHlO6SVaCQ2mj78lg==}
+
+  '@types/better-sqlite3@9.6.0':
+    resolution: {integrity: sha512-ZEEwBSgMu7GYJOynoagg5X9JbxfL6dTJDsgViJIqh67jV44kyOr9RXfmFjLK5rzC4MWssP06t9hu/JwGDnUbCg==}
 
   '@types/bn.js@5.1.6':
     resolution: {integrity: sha512-Xh8vSwUeMKeYYrj3cX4lGQgFSF/N03r+tv4AiLl1SucqV+uTQpxRcnM8AkXKHwYP9ZPXOYXRr2KPXpVlIvqh9w==}
@@ -9448,6 +9454,10 @@ snapshots:
   '@types/aws-lambda@8.10.164': {}
 
   '@types/better-sqlite3@7.6.12':
+    dependencies:
+      '@types/node': 22.10.2
+
+  '@types/better-sqlite3@9.6.0':
     dependencies:
       '@types/node': 22.10.2
 

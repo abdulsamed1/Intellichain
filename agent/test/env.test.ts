@@ -57,6 +57,8 @@ describe("loadEnv", () => {
     expect(env.functions.subscriptionId).toBe(17n);
     expect(env.functions.slotId).toBe(0);
     expect(env.functions.secretVersion).toBe(0n);
+    expect(env.functions.fulfillmentTickMs).toBe(15000);
+    expect(env.functions.fulfillmentMaxTicks).toBe(60);
     expect(env.serverPort).toBe(3000);
   });
 

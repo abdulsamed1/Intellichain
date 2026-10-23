@@ -1,5 +1,8 @@
 import { getAddress, keccak256, stringToBytes, type Address } from "viem";
 
+/** Re-exported so core modules treat `Address` as part of this module's ABI. */
+export type { Address };
+
 /**
  * Network runtime constants for the agent — mirrors
  * contract/script/utility/NetworkConfigLibrary.sol `getNetworkConfig()`.
