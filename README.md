@@ -69,7 +69,7 @@ make test
 make fmt          # format;   make fmt-check fails CI if unformatted
 
 # deploy to Sepolia (needs SEPOLIA_RPC_URL + PRIVATE_KEY in .env)
-make deploy CONTRACT_NAME=src/GetGift.sol:GetGift
+make deploy
 
 # verify on Etherscan (needs ETHERSCAN_API_KEY)
 make verify CONTRACT_ADDRESS=0x...
@@ -82,11 +82,45 @@ The deployment scripts read network defaults from
 `contract/script/utility/NetworkConfigLibrary.sol` (Sepolia router
 `0xb83E47C2bC239B3bf370bc41e1459A34b41238D0`, DON `fun-ethereum-sepolia-1`);
 the router/DON are passed into the constructor, so the same bytecode serves
-other networks by extending that one file.
+other networks by extending that one file. Note `deploy` runs the deploy
+script (`SCRIPT_FILE`) — the contract itself has no `run()`; `CONTRACT_NAME`
+is only consumed by `make verify` / `make abi`.
 
 > 🔁 The contract at [`0x3437c36913b3f2f18a71f63750d0a35fbd6b2135`](https://sepolia.etherscan.io/address/0x3437c36913b3f2f18a71f63750d0a35fbd6b2135)
 > is the **original example deployment** — main has evolved beyond it and
 > needs a fresh deployment.
+
+## 🔗 Chainlink Functions: subscription & secrets
+
+A fresh deployment cannot redeem anything until its Functions billing and
+secrets are wired up — in this order:
+
+1. **Create your own subscription** — `make create-subscription` (wraps
+   `script/CreateSubscription.s.sol`). The printed ID goes into `.env` as
+   `FUNCTIONS_SUBSCRIPTION_ID`. ⚠️ `NetworkConfigLibrary.sol`'s Sepolia
+   default (`4953`) is the template author's own paid subscription — a
+   `sendRequest` against it will fail for anyone else, hence the override.
+2. **Fund it with LINK** — `make fund-subscription SUBSCRIPTION_ID=<id> LINK_JUELS=50000000000000000` (0.05 LINK here; a redemption request costs a fraction).
+3. **Authorize your consumer** — `make add-consumer SUBSCRIPTION_ID=<id>` (uses `CONTRACT_ADDRESS` from `.env`).
+4. **Upload the Supabase API key as a DON-hosted secret** — that key is the
+   `apikey` read by the inline `SOURCE` JavaScript. Create one slot; record
+   which `slot` / `version` you used and pass them as
+   `SLOT` ↔ `donHostedSecretsSlotID` / `VERSION` ↔ `donHostedSecretsVersion`
+   on `make interact` (or let the `agent/` stage automate this —
+   `agent/scripts/upload-don-secrets.ts` writes the values back into its own
+   `.env`). The smart-contract-side CLI relies on you setting these values;
+   the toolchain UI at <https://functions.chain.link> shows slot/version.
+   DON-hosted secrets **expire after ~24 hours** — re-upload periodically.
+5. **Database provenance** — the `SOURCE` constant embeds the Supabase
+   project URL it validates gift codes against, and contract constants are
+   immutable: switching to your own Supabase project means editing `SOURCE`
+   in `src/GetGift.sol` and **redeploying**. There is no post-deployment
+   knob.
+6. **Stuck requests** — if a fulfillment could never complete (e.g. callback
+   ran out of its 300k gas after the Router consumed the request), the
+   system's one-request invariant stays stuck; any allowlisted admin clears
+   it with `make send FUNCTION="resetStuckRequest()"` after verifying in the
+   Router logs the request was consumed.
 
 ## ⚙️ Environment variables
 
@@ -97,7 +131,8 @@ other networks by extending that one file.
 | `ETHERSCAN_API_KEY` | `make verify` | etherscan.io account |
 | `PRIVATE_KEY` | deploy / broadcast | fund with Sepolia ETH + LINK |
 | `CONTRACT_ADDRESS`, `WALLET_ADDRESS` | interaction targets | addresses of deployed contract / your wallet |
-| `CONTRACT_NAME`, `SCRIPT_FILE` | deploy / interact | defaults match this repo |
+| `CONTRACT_NAME`, `SCRIPT_FILE` | verify / abi · deploy / interact | deploy runs `SCRIPT_FILE`; `CONTRACT_NAME` is only for `verify` / `abi` |
+| `FUNCTIONS_SUBSCRIPTION_ID` | `redeemGiftCode` script overrides | your own billing; overrides NetworkConfigLibrary's network default (Sepolia 4953 = author's own) |
 | `FUNCTION`, plus target-specific args (`SALT`, `VALUE`, `TX_HASH`, …) | misc cast targets | see `make help` |
 
 Plain `make build` / `make test` / `make fmt` need **nothing** — they are
@@ -123,25 +158,26 @@ Inside you already have a compiled, analyzed copy of the project in
 
 ## 🧪 Testing
 
-55 tests across 7 suites (`contract/test/unit/`), all offline:
+63 tests across 8 suites (`contract/test/`), all offline:
 
 | Suite | Covers |
 |---|---|
 | `GetGift.init.t.sol` | constructor + injected router/DON |
-| `GetGift.access.t.sol` | allowlist paths, count bookkeeping, lockout guard, events |
+| `GetGift.access.t.sol` | allowlist paths, count bookkeeping, lockout guard, zero-address backstop, events |
 | `GetGift.request.t.sol` | request validation, racing claims, in-flight invariant |
 | `GetGift.fulfillment.t.sol` | fulfillment outcomes, release paths, minting, events |
+| `GetGift.shield.t.sol` | reverting-recipient / malformed-response shields, stuck-request recovery hatch, stale-replay guard |
 | `GetGift.nft.t.sol` | mint/metadata correctness, registry getters |
 | `GetGift.gas.t.sol` | gas profiling for request + fulfillment |
 | `utilites/GetGift.utils.t.sol` | shared base (mocked Chainlink router) |
 
 ## 📜 Contract surface (`src/GetGift.sol`)
 
-- **Errors** `UnexpectedRequestID`, `CallerNotAllowlisted`, `CodeAlreadyRedeemed`, `RequestAlreadyInFlight`, `InvalidGiftCode`, `InvalidRecipient`, `CannotRemoveLastAllowlisted`, `AddressNotAllowlisted`, `InvalidGiftDefinition`
-- **Events** `Response`, `GiftRedeemed`, `GiftCodeReleased`, `GiftAdded`, `AllowListAdded`, `AllowListRemoved`
-- **Admin** (allowlist-gated): `addGift`, `addGiftToAllowList → addToAllowList`, `removeFromAllowList(address)`, `sendRequest`
-- **Oracle-only** `handleOracleFulfillment` (router-gated, Chainlink standard)
-- Chainlink request details: DON-hosted Supabase API key (slot/version), inline SOURCE JS, 300k callback gas
+- **Errors** `UnexpectedRequestID`, `CallerNotAllowlisted`, `CodeAlreadyRedeemed`, `RequestAlreadyInFlight`, `InvalidGiftCode`, `InvalidRecipient`, `CannotRemoveLastAllowlisted`, `AddressNotAllowlisted`, `InvalidGiftDefinition`, `FulfillmentNotInProcess`, `RequestNotStuck`
+- **Events** `Response`, `GiftRedeemed`, `GiftCodeReleased`, `FulfillmentFailed`, `GiftAdded`, `AllowListAdded`, `AllowListRemoved`
+- **Admin** (allowlist-gated): `addGift`, `addToAllowList` (zero address rejected), `removeFromAllowList(address)`, `sendRequest`, `resetStuckRequest` (recovery hatch)
+- **Oracle-only** `handleOracleFulfillment` (router-gated, Chainlink standard); its mint attempt is shielded — a reverting recipient contract or malformed response releases the claimed code instead of bricking the invariant
+- Chainlink request details: DON-hosted Supabase API key (slot/version), inline SOURCE JS (edit + redeploy to change database), 300k callback gas
 
 ## 🙏 Provenance
 

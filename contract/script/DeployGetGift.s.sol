@@ -34,7 +34,7 @@ contract DeployGetGift is Script {
         console.log("GetGift deployed at address: ", address(getGift));
         console.log("Router address: ", config.router);
         console.log("DON ID: ", vm.toString(config.donId));
-        console.log("Callback Gas Limit: ", config.callbackGasLimit);
+        console.log("Callback Gas Limit: ", uint256(GetGift.CALLBACK_GAS_LIMIT));
 
         vm.stopBroadcast();
 

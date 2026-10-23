@@ -73,19 +73,22 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
 
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
-    // Hardcode javascript code that is to sent to DON
-    // REPLACE THE SUPBASE PROJECT NAME in js code below:
-    // "url: `https://<SUPBASE_PROJECT_NAME>.supabase.co/rest/v1/<TABLE_NAME>?select=<COLUMN_NAME1>,<COLUMN_NAME2>`,"
-    // TABLE_NAME is the name of table created in step 1.
-    // COLUMN_NAMES are names of columns to be search, in the case, they are gift_code and gift_name.
+    // The inline JavaScript below is executed by the Chainlink Functions DON:
+    // it looks the gift code up in a Supabase table (auth: a DON-hosted
+    // secret referenced by the slot/version passed to sendRequest) and returns
+    // the gift name — which MUST match a gift type registered via addGift() —
+    // or "not found". To use YOUR own database, edit the Supabase URL /
+    // table / column names inside this constant and REDEPLOY: contract
+    // constants are immutable, there is no post-deployment knob for the
+    // SOURCE payload (see README "Chainlink Functions: subscription & secrets").
 
     string public constant SOURCE = "const giftCode = args[0];"
         'if(!secrets.apikey) { throw Error("Error: Supabase API Key is not set!") };' "const apikey = secrets.apikey;"
         "const apiResponse = await Functions.makeHttpRequest({"
-        'url: "https://flofeywjrxcklrizkgdg.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",' 'method: "GET",'
-        'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {" "console.error(apiResponse.error);"
-        'throw Error("Request failed: " + apiResponse.message);' "};" "const { data } = apiResponse;"
-        "const item = data.find(item => item.gift_code == giftCode);"
+        'url: "https://YOUR_SUPABASE_PROJECT_REF.supabase.co/rest/v1/Gifts?select=gift_name,gift_code",'
+        'method: "GET",' 'headers: { "apikey": apikey}' "});" "if (apiResponse.error) {"
+        "console.error(apiResponse.error);" 'throw Error("Request failed: " + apiResponse.message);' "};"
+        "const { data } = apiResponse;" "const item = data.find(item => item.gift_code == giftCode);"
         'if(item == undefined) {return Functions.encodeString("not found")};'
         "return Functions.encodeString(item.gift_name);";
 

@@ -16,7 +16,8 @@ endif
         init clean install update build \
         test test-fork coverage snapshot \
         anvil anvil-fork node \
-        deploy verify interact \
+        verify interact \
+        create-subscription fund-subscription add-consumer \
         send call create2 multisig \
         storage logs events \
         balance nonce gas block \
@@ -122,6 +123,38 @@ gas-report:  ## Generate gas optimization report
 # Fork & Local Node
 # --------------------------
 
+# --------------------------
+# Chainlink Functions Subscription Lifecycle
+# --------------------------
+# Order: deploy → create-subscription → fund-subscription → add-consumer.
+# Put the printed ID into .env as FUNCTIONS_SUBSCRIPTION_ID (it overrides
+# NetworkConfigLibrary's network default, which ships the template author's
+# own Sepolia subscription, 4953).
+
+create-subscription: check-network check-keystore  ## Create a Functions subscription; the printed ID goes into .env
+	@echo "🧾 Creating Chainlink Functions subscription..."
+	@forge script script/CreateSubscription.s.sol:CreateSubscription \
+		--sig "createSubscription()" \
+		--rpc-url $(SEPOLIA_RPC_URL) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast
+
+fund-subscription: check-network check-keystore  ## Fund it: SUBSCRIPTION_ID=<id> LINK_JUELS=<amount> (1e18 Juels = 1 LINK)
+	@echo "💰 Funding Chainlink Functions subscription..."
+	@forge script script/CreateSubscription.s.sol:CreateSubscription \
+		--sig "fundSubscription(uint64,uint96)" $(SUBSCRIPTION_ID) $(LINK_JUELS) \
+		--rpc-url $(SEPOLIA_RPC_URL) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast
+
+add-consumer: check-network check-keystore check-contract  ## Authorize the deployed contract: SUBSCRIPTION_ID=<id>
+	@echo "🔗 Adding consumer to Chainlink Functions subscription..."
+	@forge script script/CreateSubscription.s.sol:CreateSubscription \
+		--sig "addConsumer(uint64,address)" $(SUBSCRIPTION_ID) $(CONTRACT_ADDRESS) \
+		--rpc-url $(SEPOLIA_RPC_URL) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast
+
 # Start a local Anvil node without forking
 anvil: ## Start Anvil node
 	@echo "⏳ Stopping any running Anvil instances..."
@@ -174,9 +207,9 @@ deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 # --------------------------
 # Deployment & Verification
 # --------------------------
-deploy: ## Deploy to SEPOLIA_RPC_URL live network
+deploy: check-network check-keystore  ## Deploy to SEPOLIA_RPC_URL live network (the deploy SCRIPT holds run(), CONTRACT_NAME is only for verify/abi)
 	@echo "🚀 Starting Deploy on SEPOLIA_RPC_URL live network..."
-	@forge script $(CONTRACT_NAME) \
+	@forge script $(SCRIPT_FILE) \
 		--rpc-url $(SEPOLIA_RPC_URL) \
 		--private-key $(PRIVATE_KEY) \
 		--broadcast

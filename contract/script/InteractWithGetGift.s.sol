@@ -16,27 +16,42 @@ import {NetworkConfigLibrary} from "script/utility/NetworkConfigLibrary.sol";
 contract InteractWithGetGift is Script {
     // Error codes
     error InteractWithGetGift__NoContractAddressProvided();
+    error InteractWithGetGift__NoRecipientProvided();
 
     /**
-     * @notice Sends a request to redeem a gift code
+     * @notice Sends a request to redeem a gift code for a USER's wallet
      * @param getGiftAddress The address of the deployed GetGift contract
      * @param giftCode The gift code to redeem
      * @param donHostedSecretsSlotID The slot ID for DON hosted secrets
      * @param donHostedSecretsVersion The version for DON hosted secrets
+     * @param userAddr The wallet that receives the gift NFT (NOT the
+     * broadcaster — the user who claimed the gift)
      */
     function redeemGiftCode(
         address getGiftAddress,
         string memory giftCode,
         uint8 donHostedSecretsSlotID,
-        uint64 donHostedSecretsVersion
+        uint64 donHostedSecretsVersion,
+        address userAddr
     ) external {
         if (getGiftAddress == address(0)) {
             revert InteractWithGetGift__NoContractAddressProvided();
+        }
+        if (userAddr == address(0)) {
+            revert InteractWithGetGift__NoRecipientProvided();
         }
 
         // Get the network configuration
         HelperConfig helperConfig = new HelperConfig();
         NetworkConfigLibrary.NetworkConfig memory config = helperConfig.getActiveConfig();
+
+        // A deployment normally keeps its own Chainlink Functions
+        // subscription: FUNCTIONS_SUBSCRIPTION_ID in .env overrides the
+        // network default (which ships the template author's own id, 4953)
+        uint64 subscriptionId = vm.envOr("FUNCTIONS_SUBSCRIPTION_ID", uint64(0));
+        if (subscriptionId == 0) {
+            subscriptionId = config.subscriptionId;
+        }
 
         // Create the arguments array
         string[] memory args = new string[](1);
@@ -50,12 +65,12 @@ contract InteractWithGetGift is Script {
         console.log("Sending gift code redemption request:");
         console.log("Contract Address: ", getGiftAddress);
         console.log("Gift Code: ", giftCode);
-        console.log("Subscription ID: ", config.subscriptionId);
+        console.log("Recipient (gift beneficiary): ", userAddr);
+        console.log("Subscription ID: ", uint256(subscriptionId));
 
         // Send the request
-        bytes32 requestId = getGift.sendRequest(
-            donHostedSecretsSlotID, donHostedSecretsVersion, args, config.subscriptionId, msg.sender
-        );
+        bytes32 requestId =
+            getGift.sendRequest(donHostedSecretsSlotID, donHostedSecretsVersion, args, subscriptionId, userAddr);
 
         console.log("Request sent with ID: ", vm.toString(requestId));
 
