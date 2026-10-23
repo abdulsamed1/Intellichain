@@ -20,7 +20,7 @@ contract GetGiftAccessTest is GetGiftBase {
     /// @notice Test that non-allowlisted addresses are not allowed
     function test_StrangerNoAccess() public {
         vm.startPrank(stranger);
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         getGift.addToAllowList(address(0x123));
         vm.stopPrank();
     }
@@ -38,7 +38,7 @@ contract GetGiftAccessTest is GetGiftBase {
     /// @notice Test that non-owner cannot add to allowlist
     function test_AddToAllowList_RevertIfNotOwner() public {
         vm.prank(stranger);
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         getGift.addToAllowList(stranger);
     }
 
@@ -53,7 +53,7 @@ contract GetGiftAccessTest is GetGiftBase {
         getGift.removeFromAllowList();
         
         // Verify they can no longer add others
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         vm.prank(stranger);
         getGift.addToAllowList(address(0x123));
     }
@@ -102,7 +102,7 @@ contract GetGiftAccessTest is GetGiftBase {
     /// @notice Test removing address that is not in allowlist
     function test_RemoveFromAllowList_NotInList() public {
         vm.prank(user);
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         getGift.removeFromAllowList();
     }
 
@@ -116,7 +116,7 @@ contract GetGiftAccessTest is GetGiftBase {
         getGift.removeFromAllowList();
 
         vm.prank(user);
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         getGift.addToAllowList(stranger);
     }
 }

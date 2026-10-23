@@ -26,6 +26,8 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     uint256 public tokenId;
 
     error UnexpectedRequestID(bytes32 requestId);
+    error CallerNotAllowlisted();
+    error CodeAlreadyRedeemed();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
 
@@ -87,7 +89,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     ) external onlyAllowList returns (bytes32 requestId) {
         // make sure the code is redeemable
         string memory giftCode = args[0];
-        require(!giftCodeRedeemed[giftCode], "the code is redeemed");
+        if (giftCodeRedeemed[giftCode]) revert CodeAlreadyRedeemed();
 
         // send the Chainlink Functions request with DON hosted secret
         FunctionsRequest.Request memory req;
@@ -159,7 +161,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     }
 
     modifier onlyAllowList() {
-        require(allowList[msg.sender], "you do not have permission to call the function");
+        if (!allowList[msg.sender]) revert CallerNotAllowlisted();
         _;
     }
 }

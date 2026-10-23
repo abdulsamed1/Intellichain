@@ -31,7 +31,7 @@ contract GetGiftNFTTest is GetGiftBase {
 
         // Try to reuse the same code - should revert
         vm.startPrank(user);
-        vm.expectRevert("the code is redeemed");
+        vm.expectRevert(GetGift.CodeAlreadyRedeemed.selector);
         getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
         vm.stopPrank();
     }

@@ -50,7 +50,7 @@ contract GetGiftRequestTest is GetGiftBase {
 
         // Try to use the same code again
         vm.startPrank(user);
-        vm.expectRevert("the code is redeemed");
+        vm.expectRevert(GetGift.CodeAlreadyRedeemed.selector);
         getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
         vm.stopPrank();
     }
@@ -73,7 +73,7 @@ contract GetGiftRequestTest is GetGiftBase {
         string[] memory args = new string[](1);
         args[0] = validGiftCode;
         vm.startPrank(stranger);
-        vm.expectRevert("you do not have permission to call the function");
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, stranger);
         vm.stopPrank();
     }
@@ -147,7 +147,7 @@ contract GetGiftRequestTest is GetGiftBase {
 
         // Try to reuse the same code - should revert
         vm.startPrank(user);
-        vm.expectRevert("the code is redeemed");
+        vm.expectRevert(GetGift.CodeAlreadyRedeemed.selector);
         getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
         vm.stopPrank();
     }
