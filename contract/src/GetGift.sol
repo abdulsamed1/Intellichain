@@ -39,10 +39,13 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     string constant ITEM_2_METADATA = "ipfs://QmfNhhpUezQLcyqXBGL4ehPwo7Gfbwk9yy3YcJqGgr9dPb";
     string constant ITEM_3_METADATA = "ipfs://QmNxq7GqehZf9SpCEFK7C4moxZTZPNwCer5yCAqCBNdk2a";
 
-    // Hardcode for Sepolia testnet
-    address public constant ROUTER_ADDR = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0;
+    // Router and DON ID are injected at deployment time (per-network values
+    // from script/utility/NetworkConfigLibrary.sol), not hardcoded — the same
+    // bytecode serves every network and test suites can inject their own mock
+    // router. Public immutables keep the getters tested in GetGiftInitTest.
+    address public immutable ROUTER_ADDR;
 
-    bytes32 public constant DON_ID = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; // Replace with your DON ID
+    bytes32 public immutable DON_ID;
 
     uint32 public constant CALLBACK_GAS_LIMIT = 300_000;
 
@@ -62,7 +65,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         'if(item == undefined) {return Functions.encodeString("not found")};'
         "return Functions.encodeString(item.gift_name);";
 
-    constructor() FunctionsClient(ROUTER_ADDR) ERC721("Gift", "GT") {
+    constructor(address router, bytes32 donId) FunctionsClient(router) ERC721("Gift", "GT") {
+        ROUTER_ADDR = router;
+        DON_ID = donId;
         allowList[msg.sender] = true;
         giftToTokenUri[ITEM_1] = ITEM_1_METADATA;
         giftToTokenUri[ITEM_2] = ITEM_2_METADATA;
