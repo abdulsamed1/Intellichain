@@ -42,7 +42,9 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     error InvalidGiftDefinition();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
-    event GiftRedeemed(bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId);
+    event GiftRedeemed(
+        bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId
+    );
     event GiftCodeReleased(string giftCode);
     event GiftAdded(string giftName, string tokenUri);
     event AllowListAdded(address indexed account);

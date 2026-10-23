@@ -3,6 +3,8 @@ cache/
 out/
 lib/
 bin/
+coverage-report/
+lcov.info
 
 
 

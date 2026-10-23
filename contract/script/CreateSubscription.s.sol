@@ -23,23 +23,23 @@ contract CreateSubscription is Script {
         // Get the network configuration
         HelperConfig helperConfig = new HelperConfig();
         NetworkConfigLibrary.NetworkConfig memory config = helperConfig.getActiveConfig();
-        
+
         // Start broadcasting transactions
         vm.startBroadcast();
-        
+
         console.log("Creating Chainlink Functions subscription on router: ", config.router);
-        
+
         // Create subscription
         FunctionsRouter router = FunctionsRouter(config.router);
         uint64 subscriptionId = router.createSubscription();
-        
+
         console.log("Subscription created with ID: ", subscriptionId);
-        
+
         vm.stopBroadcast();
-        
+
         return subscriptionId;
     }
-    
+
     /**
      * @notice Funds an existing Chainlink Functions subscription with LINK tokens
      * @param subscriptionId The ID of the subscription to fund
@@ -49,30 +49,26 @@ contract CreateSubscription is Script {
         // Get the network configuration
         HelperConfig helperConfig = new HelperConfig();
         NetworkConfigLibrary.NetworkConfig memory config = helperConfig.getActiveConfig();
-        
+
         if (subscriptionId == 0) {
             subscriptionId = config.subscriptionId;
         }
-        
+
         // Start broadcasting transactions
         vm.startBroadcast();
-        
+
         console.log("Funding subscription ID: ", subscriptionId);
         console.log("Fund amount (Juels): ", fundAmount);
-        
+
         // Fund with LINK token
         LinkTokenInterface linkToken = LinkTokenInterface(config.linkToken);
-        linkToken.transferAndCall(
-            config.router,
-            fundAmount,
-            abi.encode(subscriptionId)
-        );
-        
+        linkToken.transferAndCall(config.router, fundAmount, abi.encode(subscriptionId));
+
         console.log("Subscription funded successfully");
-        
+
         vm.stopBroadcast();
     }
-    
+
     /**
      * @notice Adds a consumer contract to an existing subscription
      * @param subscriptionId The ID of the subscription
@@ -82,23 +78,23 @@ contract CreateSubscription is Script {
         // Get the network configuration
         HelperConfig helperConfig = new HelperConfig();
         NetworkConfigLibrary.NetworkConfig memory config = helperConfig.getActiveConfig();
-        
+
         if (subscriptionId == 0) {
             subscriptionId = config.subscriptionId;
         }
-        
+
         // Start broadcasting transactions
         vm.startBroadcast();
-        
+
         console.log("Adding consumer to subscription ID: ", subscriptionId);
         console.log("Consumer address: ", consumerAddress);
-        
+
         // Add consumer
         FunctionsRouter router = FunctionsRouter(config.router);
         router.addConsumer(subscriptionId, consumerAddress);
-        
+
         console.log("Consumer added successfully");
-        
+
         vm.stopBroadcast();
     }
 }

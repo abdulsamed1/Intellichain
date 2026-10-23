@@ -5,8 +5,9 @@ import {Test} from "lib/forge-std/src/Test.sol";
 import {GetGift} from "../../src/GetGift.sol";
 import {FunctionsRouter} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0/FunctionsRouter.sol";
 import {IFunctionsRouter} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0/interfaces/IFunctionsRouter.sol";
-import {FunctionsV1EventsMock} from
-    "lib/chainlink/contracts/src/v0.8/functions/dev/v1_X/mocks/FunctionsV1EventsMock.sol";
+import {
+    FunctionsV1EventsMock
+} from "lib/chainlink/contracts/src/v0.8/functions/dev/v1_X/mocks/FunctionsV1EventsMock.sol";
 import {FunctionsClient} from "lib/chainlink/contracts/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 
 /**
@@ -130,11 +131,7 @@ abstract contract GetGiftBase is Test {
         getGift.addToAllowList(user);
     }
 
-    function _encodeRequest(string memory giftCode, uint8 slotId, uint64 version)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _encodeRequest(string memory giftCode, uint8 slotId, uint64 version) internal pure returns (bytes memory) {
         string[] memory _args = new string[](1);
         _args[0] = giftCode;
         return abi.encode(_args, slotId, version);

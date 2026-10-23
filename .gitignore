@@ -10,6 +10,9 @@ Eliza-Chainlink-Functions/
 # Ignores development broadcast logs
 broadcast/
 
+# Superpowers local workspaces (briefs, task ledgers)
+.superpowers/
+
 
 
 # Dotenv file

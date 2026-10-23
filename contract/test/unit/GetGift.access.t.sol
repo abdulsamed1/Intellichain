@@ -13,6 +13,7 @@ contract GetGiftAccessTest is GetGiftBase {
     // Mirror of the GetGift events asserted with vm.expectEmit (sig-matched)
     event AllowListAdded(address indexed account);
     event AllowListRemoved(address indexed account);
+
     /// @notice Test that owner has access by default
     function test_OwnerHasAccess() public {
         vm.prank(owner);
@@ -32,7 +33,7 @@ contract GetGiftAccessTest is GetGiftBase {
     function test_AddToAllowList_ByOwner() public {
         vm.prank(owner);
         getGift.addToAllowList(stranger);
-        
+
         // Now stranger should be able to add others, proving they're on allowlist
         vm.prank(stranger);
         getGift.addToAllowList(address(0x123));
@@ -50,11 +51,11 @@ contract GetGiftAccessTest is GetGiftBase {
         // First add stranger to allowlist
         vm.prank(owner);
         getGift.addToAllowList(stranger);
-        
+
         // Stranger removes themselves (removal takes an explicit address)
         vm.prank(stranger);
         getGift.removeFromAllowList(stranger);
-        
+
         // Verify they can no longer add others
         vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
         vm.prank(stranger);
@@ -75,10 +76,10 @@ contract GetGiftAccessTest is GetGiftBase {
         // Verify each user can perform allowlisted actions
         vm.prank(user);
         getGift.addToAllowList(address(0x123));
-        
+
         vm.prank(user2);
         getGift.addToAllowList(address(0x124));
-        
+
         vm.prank(user3);
         getGift.addToAllowList(address(0x125));
     }
@@ -89,14 +90,14 @@ contract GetGiftAccessTest is GetGiftBase {
         getGift.addToAllowList(user);
         // User should be able to add others
         vm.stopPrank();
-        
+
         vm.prank(user);
         getGift.addToAllowList(address(0x123));
-        
+
         // Re-add user to allowlist
         vm.prank(owner);
         getGift.addToAllowList(user);
-        
+
         // User should still be able to add others
         vm.prank(user);
         getGift.addToAllowList(address(0x124));

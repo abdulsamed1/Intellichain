@@ -16,19 +16,20 @@ endif
         init clean install update build \
         test test-fork coverage snapshot \
         anvil anvil-fork node \
-        deploy verify \
+        deploy verify interact \
         send call create2 multisig \
         storage logs events \
         balance nonce gas block \
         erc20 erc721 erc1155 \
         proof debug trace \
         calldata abi sig tx receipt \
-        fork-cheatcodes gas-report
+        fork-cheatcodes gas-report \
+        fmt fmt-check
 
 # --------------------------
 # Global Variables
 # --------------------------
-MNEMONIC="test test test test test test test test test test test junk"
+MNEMONIC = test test test test test test test test test test test junk
 
 # --------------------------
 # Utility Functions
@@ -80,10 +81,9 @@ build:  ## Compile contracts
 # Testing & Verification
 # --------------------------
 
-test: check-network  ## Run basic tests
-	@echo "🧪 Running basic tests..."
-	@forge test -vvvv --ffi 
-
+test: ## Run unit tests (offline, no RPC required)
+	@echo "🧪 Running unit tests..."
+	@forge test -vv
 
 test-fork: check-network  ## Run tests on forked network
 	@echo "🧪 Running tests on forked network..."
@@ -92,6 +92,14 @@ test-fork: check-network  ## Run tests on forked network
 test-func:  ## Run specific test 
 	@echo "🧪 Running test on function..."
 	@forge test --match-test $(FUNCTION) -vvv
+
+fmt: ## Format all Solidity sources
+	@echo "🎨 Formatting sources..."
+	@forge fmt
+
+fmt-check: ## Fail if sources are not formatted
+	@echo "🎨 Checking formatting..."
+	@forge fmt --check
 
 coverage:  ## 📊 Generate coverage report for GetGift.sol only
 	@echo "📊 Generating coverage report for GetGift.sol..."
@@ -166,12 +174,12 @@ deploy-fork-lastblock: ## Start Anvil Fork at last block and Deploy Contract
 # --------------------------
 # Deployment & Verification
 # --------------------------
-deploy: ## Deploy to SEPOLIA_RPC_URL live network	
+deploy: ## Deploy to SEPOLIA_RPC_URL live network
 	@echo "🚀 Starting Deploy on SEPOLIA_RPC_URL live network..."
 	@forge script $(CONTRACT_NAME) \
 		--rpc-url $(SEPOLIA_RPC_URL) \
 		--private-key $(PRIVATE_KEY) \
-		--broadcast \
+		--broadcast
 
 
 verify: check-network check-contract  ## Verify deployed contract

@@ -56,15 +56,11 @@ library NetworkConfigLibrary {
                 }),
                 true
             );
-        }else {
+        } else {
             // Return empty config with false flag for unsupported networks
             return (
                 NetworkConfig({
-                    router: address(0),
-                    donId: bytes32(0),
-                    callbackGasLimit: 0,
-                    linkToken: address(0),
-                    subscriptionId: 0
+                    router: address(0), donId: bytes32(0), callbackGasLimit: 0, linkToken: address(0), subscriptionId: 0
                 }),
                 false
             );

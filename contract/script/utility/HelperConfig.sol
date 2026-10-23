@@ -20,12 +20,12 @@ contract HelperConfig {
      * @dev Uses the NetworkConfigLibrary for its data structures
      */
     using NetworkConfigLibrary for uint256;
-    
+
     /**
      * @dev The active network configuration for the current chain
      */
     NetworkConfigLibrary.NetworkConfig private s_activeNetworkConfig;
-    
+
     /**
      * @dev Event emitted when the active network configuration is updated
      * @param chainId The chain ID of the updated network configuration
@@ -38,13 +38,13 @@ contract HelperConfig {
      */
     constructor() {
         uint256 currentChainId = block.chainid;
-        (NetworkConfigLibrary.NetworkConfig memory config, bool supported) = 
+        (NetworkConfigLibrary.NetworkConfig memory config, bool supported) =
             NetworkConfigLibrary.getNetworkConfig(currentChainId);
-        
+
         if (!supported) {
             revert HelperConfig__UnsupportedNetwork(currentChainId);
         }
-        
+
         s_activeNetworkConfig = config;
         emit ActiveNetworkUpdated(currentChainId);
     }
@@ -57,7 +57,7 @@ contract HelperConfig {
     function getActiveConfig() external view returns (NetworkConfigLibrary.NetworkConfig memory) {
         return s_activeNetworkConfig;
     }
-    
+
     /**
      * @notice Gets the network configuration for a specific chain ID
      * @dev Uses the library to fetch configuration, reverts if network not supported
@@ -65,16 +65,16 @@ contract HelperConfig {
      * @return The network configuration for the specified chain ID
      */
     function getNetworkConfig(uint256 chainId) external pure returns (NetworkConfigLibrary.NetworkConfig memory) {
-        (NetworkConfigLibrary.NetworkConfig memory config, bool supported) = 
+        (NetworkConfigLibrary.NetworkConfig memory config, bool supported) =
             NetworkConfigLibrary.getNetworkConfig(chainId);
-            
+
         if (!supported) {
             revert HelperConfig__UnsupportedNetwork(chainId);
         }
-        
+
         return config;
     }
-    
+
     /**
      * @notice Checks if a network is supported
      * @dev Forwards the call to the library function

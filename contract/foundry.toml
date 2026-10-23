@@ -11,7 +11,8 @@ solc_version = "0.8.20"
 cache = true
 cache_path = 'cache'
 
-# Test specific settings
+# Test specific settings: skip fork/integration suites in plain `forge test`
+# (they are allowed to require a live RPC endpoint)
 test = 'test'
 no_match_test = "Fork|Integration"
 
@@ -19,17 +20,11 @@ no_match_test = "Fork|Integration"
 via_ir = true
 optimizer_runs = 1000000
 
-[profile.test]
-via_ir = false
-src = 'test'
-optimizer = true
-optimizer_runs = 5000
-
-# Load environment variables from this file
-env_file = ".env"
-
 [profile.coverage]
 via_ir = true
+
+# note: Foundry does not read `.env` by itself — the Makefile includes and
+# exports `.env` for every target. Copy `.env.example` to `.env` to start.
 
 # For more configuration options, see:
 # https://github.com/foundry-rs/foundry/tree/master/config

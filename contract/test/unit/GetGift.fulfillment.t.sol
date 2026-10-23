@@ -12,8 +12,11 @@ import {GetGift} from "../../src/GetGift.sol";
  */
 contract GetGiftFulfillmentTest is GetGiftBase {
     // Mirror of the GetGift events asserted with vm.expectEmit (sig-matched)
-    event GiftRedeemed(bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId);
+    event GiftRedeemed(
+        bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId
+    );
     event GiftCodeReleased(string giftCode);
+
     /// @notice Test successful fulfillment with valid response
     function test_FulfillRequest_ValidResponse() public {
         vm.startPrank(owner);

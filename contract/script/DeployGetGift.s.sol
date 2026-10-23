@@ -23,21 +23,21 @@ contract DeployGetGift is Script {
         // Get the network configuration
         HelperConfig helperConfig = new HelperConfig();
         NetworkConfigLibrary.NetworkConfig memory config = helperConfig.getActiveConfig();
-        
+
         // Start broadcasting transactions
         vm.startBroadcast();
-        
+
         // Deploy the GetGift contract with the network-configured
         // Chainlink Functions router and DON identifier
         GetGift getGift = new GetGift(config.router, config.donId);
-        
+
         console.log("GetGift deployed at address: ", address(getGift));
         console.log("Router address: ", config.router);
         console.log("DON ID: ", vm.toString(config.donId));
         console.log("Callback Gas Limit: ", config.callbackGasLimit);
-        
+
         vm.stopBroadcast();
-        
+
         return getGift;
     }
 }
