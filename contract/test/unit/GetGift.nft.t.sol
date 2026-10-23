@@ -10,6 +10,77 @@ import {GetGift} from "../../src/GetGift.sol";
  * @notice Tests for NFT-related functionality in GetGift contract
  */
 contract GetGiftNFTTest is GetGiftBase {
+    // Mirror of the GetGift event asserted with vm.expectEmit (sig-matched)
+    event GiftAdded(string giftName, string tokenUri);
+
+    /// @notice Admin registers a new gift type: a later fulfillment of that
+    /// type mints with the newly registered metadata (previously it silently
+    /// minted an empty-URI token)
+    function test_AddGift_RegistersNewGiftType() public {
+        vm.startPrank(owner);
+        getGift.addToAllowList(user);
+        vm.expectEmit(true, true, true, true);
+        emit GiftAdded("new item", "ipfs://new-item");
+        getGift.addGift("new item", "ipfs://new-item");
+        vm.stopPrank();
+
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        uint256 expectedTokenId = getGift.tokenId();
+        vm.startPrank(ROUTER_ADDR);
+        getGift.handleOracleFulfillment(requestId, abi.encode("new item"), new bytes(0));
+        vm.stopPrank();
+
+        assertEq(getGift.ownerOf(expectedTokenId), user);
+        assertEq(getGift.tokenURI(expectedTokenId), "ipfs://new-item");
+    }
+
+    /// @notice A gift definition without a name is rejected
+    function test_AddGift_RevertIfEmptyName() public {
+        vm.expectRevert(GetGift.InvalidGiftDefinition.selector);
+        vm.prank(owner);
+        getGift.addGift("", "ipfs://new-item");
+    }
+
+    /// @notice A gift definition without a token uri is rejected
+    function test_AddGift_RevertIfEmptyUri() public {
+        vm.expectRevert(GetGift.InvalidGiftDefinition.selector);
+        vm.prank(owner);
+        getGift.addGift("new item", "");
+    }
+
+    /// @notice Gift registry and redemption state are externally observable:
+    /// the registered metadata getters return the defaults, and a claimed
+    /// (in-flight) code reads redeemed=true until a failed fulfillment
+    /// releases it (then false again)
+    function test_GiftToTokenUri_PublicGetters() public {
+        assertEq(getGift.giftToTokenUri(bytes("100 discount")), ITEM_1_METADATA);
+        assertEq(getGift.giftToTokenUri(bytes("50 discount")), ITEM_2_METADATA);
+        assertEq(getGift.giftToTokenUri(bytes("1-month premium")), ITEM_3_METADATA);
+
+        assertFalse(getGift.giftCodeRedeemed(validGiftCode));
+
+        vm.prank(owner);
+        getGift.addToAllowList(user);
+        vm.startPrank(user);
+        string[] memory args = new string[](1);
+        args[0] = validGiftCode;
+        bytes32 requestId = getGift.sendRequest(1, 1, args, SUBSCRIPTION_ID, user);
+        vm.stopPrank();
+
+        assertTrue(getGift.giftCodeRedeemed(validGiftCode));
+
+        vm.startPrank(ROUTER_ADDR);
+        getGift.handleOracleFulfillment(requestId, new bytes(0), abi.encode("error"));
+        vm.stopPrank();
+
+        assertFalse(getGift.giftCodeRedeemed(validGiftCode));
+    }
+
     function test_GetGiftCodeRedeemed() public {
         vm.prank(owner);
         getGift.addToAllowList(user);

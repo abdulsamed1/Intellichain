@@ -10,6 +10,9 @@ import {GetGiftBase} from "../utilites/GetGift.utils.t.sol";
  */
 
 contract GetGiftAccessTest is GetGiftBase {
+    // Mirror of the GetGift events asserted with vm.expectEmit (sig-matched)
+    event AllowListAdded(address indexed account);
+    event AllowListRemoved(address indexed account);
     /// @notice Test that owner has access by default
     function test_OwnerHasAccess() public {
         vm.prank(owner);
@@ -48,9 +51,9 @@ contract GetGiftAccessTest is GetGiftBase {
         vm.prank(owner);
         getGift.addToAllowList(stranger);
         
-        // Stranger removes themselves
+        // Stranger removes themselves (removal takes an explicit address)
         vm.prank(stranger);
-        getGift.removeFromAllowList();
+        getGift.removeFromAllowList(stranger);
         
         // Verify they can no longer add others
         vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
@@ -99,11 +102,71 @@ contract GetGiftAccessTest is GetGiftBase {
         getGift.addToAllowList(address(0x124));
     }
 
+    /// @notice An allowlisted member may remove ANOTHER allowlisted member
+    /// (previously only msg.sender could ever be removed)
+    function test_RemoveFromAllowList_ByAddress() public {
+        vm.prank(owner);
+        getGift.addToAllowList(user);
+        vm.prank(owner);
+        getGift.addToAllowList(stranger);
+
+        vm.prank(owner);
+        getGift.removeFromAllowList(user);
+
+        vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
+        vm.prank(user);
+        getGift.addToAllowList(address(0x123));
+    }
+
+    /// @notice Removing the LAST allowlisted member would brick every admin
+    /// path forever: it must revert
+    function test_RemoveFromAllowList_CannotRemoveLastAdmin() public {
+        vm.expectRevert(GetGift.CannotRemoveLastAllowlisted.selector);
+        vm.prank(owner);
+        getGift.removeFromAllowList(owner);
+    }
+
+    /// @notice Removing an address that is not on the list reverts explicitly
+    function test_RemoveFromAllowList_RevertIfNotListed() public {
+        vm.expectRevert(GetGift.AddressNotAllowlisted.selector);
+        vm.prank(owner);
+        getGift.removeFromAllowList(stranger);
+    }
+
+    /// @notice allowListCount tracks membership and duplicate adds do not
+    /// double-count; the AllowListAdded event fires only on real state change
+    function test_AddToAllowList_CountAndEvents() public {
+        assertEq(getGift.allowListCount(), 1);
+
+        vm.expectEmit(true, true, true, true);
+        emit AllowListAdded(user);
+        vm.prank(owner);
+        getGift.addToAllowList(user);
+        assertEq(getGift.allowListCount(), 2);
+
+        // idempotent re-add: no new event, no count change
+        vm.prank(owner);
+        getGift.addToAllowList(user);
+        assertEq(getGift.allowListCount(), 2);
+    }
+
+    /// @notice Removal emits AllowListRemoved and decrements the count
+    function test_RemoveFromAllowList_EmitsEvent() public {
+        vm.prank(owner);
+        getGift.addToAllowList(user);
+
+        vm.expectEmit(true, true, true, true);
+        emit AllowListRemoved(user);
+        vm.prank(owner);
+        getGift.removeFromAllowList(user);
+        assertEq(getGift.allowListCount(), 1);
+    }
+
     /// @notice Test removing address that is not in allowlist
     function test_RemoveFromAllowList_NotInList() public {
         vm.prank(user);
         vm.expectRevert(GetGift.CallerNotAllowlisted.selector);
-        getGift.removeFromAllowList();
+        getGift.removeFromAllowList(user);
     }
 
     /// @notice Test that removed address cannot add others to allowlist
@@ -113,7 +176,7 @@ contract GetGiftAccessTest is GetGiftBase {
         vm.stopPrank();
 
         vm.prank(user);
-        getGift.removeFromAllowList();
+        getGift.removeFromAllowList(user);
 
         vm.prank(user);
         vm.expectRevert(GetGift.CallerNotAllowlisted.selector);

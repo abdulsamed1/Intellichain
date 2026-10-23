@@ -19,14 +19,17 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     bytes public s_lastResponse;
     bytes public s_lastError;
     string public result;
-    mapping(address => bool) private allowList;
-    mapping(string => bool) private giftCodeRedeemed;
+    mapping(address => bool) public allowList;
+    mapping(string => bool) public giftCodeRedeemed;
     mapping(bytes32 => address) private reqIdToAddr;
     mapping(bytes32 => string) private reqIdToGiftCode;
     uint256 public tokenId;
     /// @dev true while a Chainlink request awaits fulfillment: enforcing this
     /// prevents orphaning an earlier request (its store entry never fulfills)
     bool public requestIdInFlight;
+    /// @dev number of allowlisted admins; guarding against removing the last
+    /// one (which would brick every admin path)
+    uint256 public allowListCount;
 
     error UnexpectedRequestID(bytes32 requestId);
     error CallerNotAllowlisted();
@@ -34,13 +37,19 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     error RequestAlreadyInFlight();
     error InvalidGiftCode();
     error InvalidRecipient();
+    error CannotRemoveLastAllowlisted();
+    error AddressNotAllowlisted();
+    error InvalidGiftDefinition();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
     event GiftRedeemed(bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId);
     event GiftCodeReleased(string giftCode);
+    event GiftAdded(string giftName, string tokenUri);
+    event AllowListAdded(address indexed account);
+    event AllowListRemoved(address indexed account);
 
     // Gift codes and NFT metadata (saved on IPFS)
-    mapping(bytes => string) giftToTokenUri;
+    mapping(bytes => string) public giftToTokenUri;
     bytes constant ITEM_1 = bytes("100 discount");
     bytes constant ITEM_2 = bytes("50 discount");
     bytes constant ITEM_3 = bytes("1-month premium");
@@ -79,6 +88,7 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
         ROUTER_ADDR = router;
         DON_ID = donId;
         allowList[msg.sender] = true;
+        allowListCount = 1;
         giftToTokenUri[ITEM_1] = ITEM_1_METADATA;
         giftToTokenUri[ITEM_2] = ITEM_2_METADATA;
         giftToTokenUri[ITEM_3] = ITEM_3_METADATA;
@@ -198,15 +208,27 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     }
 
     function addGift(string memory giftName, string memory _tokenUri) external onlyAllowList {
+        if (bytes(giftName).length == 0) revert InvalidGiftDefinition();
+        if (bytes(_tokenUri).length == 0) revert InvalidGiftDefinition();
         giftToTokenUri[bytes(giftName)] = _tokenUri;
+        emit GiftAdded(giftName, _tokenUri);
     }
 
     function addToAllowList(address addrToAdd) external onlyAllowList {
-        allowList[addrToAdd] = true;
+        // idempotent: no event / count move on re-add
+        if (!allowList[addrToAdd]) {
+            allowList[addrToAdd] = true;
+            allowListCount++;
+            emit AllowListAdded(addrToAdd);
+        }
     }
 
-    function removeFromAllowList() external onlyAllowList {
-        allowList[msg.sender] = false;
+    function removeFromAllowList(address addrToRemove) external onlyAllowList {
+        if (!allowList[addrToRemove]) revert AddressNotAllowlisted();
+        if (allowListCount == 1) revert CannotRemoveLastAllowlisted();
+        allowList[addrToRemove] = false;
+        allowListCount--;
+        emit AllowListRemoved(addrToRemove);
     }
 
     modifier onlyAllowList() {
