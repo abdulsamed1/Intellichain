@@ -35,3 +35,35 @@ jobs:
 
       - name: Gas report
         run: forge test --gas-report
+
+  agent:
+    name: Agent — typecheck, offline tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent
+    steps:
+      - name: Checkout (with pinned git submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install pnpm (from package.json packageManager)
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22 (agent engines: node >= 22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: agent/pnpm-lock.yaml
+
+      # Suite is offline: NO Twitter/RPC/model/DON secrets are needed or read
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
