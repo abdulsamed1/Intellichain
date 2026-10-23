@@ -151,6 +151,15 @@ contract GetGiftAccessTest is GetGiftBase {
         assertEq(getGift.allowListCount(), 2);
     }
 
+    /// @notice The zero address must never join the admin list: an allowlisted
+    /// address(0) would inflate allowListCount and defeat the last-admin
+    /// lockout guard (the last live admin could remove themselves)
+    function test_AddToAllowList_RevertIfZeroAddress() public {
+        vm.expectRevert(GetGift.InvalidRecipient.selector);
+        vm.prank(owner);
+        getGift.addToAllowList(address(0));
+    }
+
     /// @notice Removal emits AllowListRemoved and decrements the count
     function test_RemoveFromAllowList_EmitsEvent() public {
         vm.prank(owner);

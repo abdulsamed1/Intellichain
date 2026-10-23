@@ -40,12 +40,15 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     error CannotRemoveLastAllowlisted();
     error AddressNotAllowlisted();
     error InvalidGiftDefinition();
+    error FulfillmentNotInProcess();
+    error RequestNotStuck();
 
     event Response(bytes32 indexed requestId, bytes response, bytes err);
     event GiftRedeemed(
         bytes32 indexed requestId, address indexed recipient, string giftCode, string giftName, uint256 indexed tokenId
     );
     event GiftCodeReleased(string giftCode);
+    event FulfillmentFailed(bytes32 indexed requestId, bytes reason);
     event GiftAdded(string giftName, string tokenUri);
     event AllowListAdded(address indexed account);
     event AllowListRemoved(address indexed account);
@@ -148,7 +151,13 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
      * Either response or error parameter will be set, but never both
      */
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        if (s_lastRequestId != requestId) {
+        // unknown or already-consumed request id: the bookkeeping-presence
+        // term rejects stale fulfillment data even while s_lastRequestId still
+        // points at it — once this request's bookkeeping is gone (released,
+        // fulfilled or reset) a replay can never re-enter the redeem path.
+        // (bookkeeping exists only while s_lastRequestId owns it: sendRequest
+        // writes it synchronously after _sendRequest, every exit frees it)
+        if (s_lastRequestId != requestId || bytes(reqIdToGiftCode[requestId]).length == 0) {
             revert UnexpectedRequestID(requestId);
         }
 
@@ -179,21 +188,64 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
             return;
         }
 
+        // The mint attempt is SHIELDED: previously a reverting receiver
+        // contract or a malformed response reverted the whole fulfillment —
+        // the Router consumes the request either way (its callback reverts
+        // leave nothing in this tx), so requestIdInFlight stayed true and the
+        // claimed code burned forever: one bad fulfillment bricked the system.
+        // A failed attempt now only releases the code.
+        try this._tryMint(requestId, userAddr, giftCode, response) {
+            return;
+        } catch (bytes memory reason) {
+            emit FulfillmentFailed(requestId, reason);
+            _releaseGiftCode(giftCode);
+        }
+    }
+
+    /// @notice Performs the post-decode mint for the fulfillment being
+    /// processed. Only this contract may call it (its own shielded attempt):
+    /// exposed logic would let anyone replay fulfillment data for a direct
+    /// mint. Note: this frame may run out of the callback gas budget too —
+    /// the allowlisted `resetStuckRequest` hatch covers that residual risk.
+    function _tryMint(bytes32 requestId, address userAddr, string memory giftCode, bytes memory response) external {
+        if (msg.sender != address(this)) revert FulfillmentNotInProcess();
+
         // Decode the response to the gift type
         string memory giftType = abi.decode(response, (string));
         string memory tokenUri = giftToTokenUri[bytes(giftType)];
 
         // The oracle validated the code but the contract has no registered
-        // metadata for this gift type: do NOT mint an empty-metadata token;
-        // release the code so admin can addGift() and the user can retry
-        if (bytes(tokenUri).length == 0) {
-            _releaseGiftCode(giftCode);
-            return;
-        }
+        // metadata for this gift type: do NOT mint an empty-metadata token
+        if (bytes(tokenUri).length == 0) revert InvalidGiftDefinition();
 
         // All checks passed: mint the gift NFT and record the redemption
         uint256 redeemedTokenId = safeMint(userAddr, tokenUri);
+        // re-assert the claim (idempotent): if a code was ever released while
+        // its request was still pending, a late fulfillment must put it back
+        // on redeemed state — a minted code never goes back on sale
+        giftCodeRedeemed[giftCode] = true;
         emit GiftRedeemed(requestId, userAddr, giftCode, giftType, redeemedTokenId);
+    }
+
+    /// @notice Recovery hatch for a fulfillment that could never be processed.
+    /// If the shielded attempt itself exhausts the callback gas budget, the
+    /// Router still consumes the request but EVERY state change rolls back,
+    /// leaving requestIdInFlight stuck true and the code claimed forever.
+    /// The operator MUST verify the Router already consumed the request (check
+    /// the Router's RequestProcessed log for this requestId) before calling:
+    /// clearing a merely-pending request invalidates its id, so a late
+    /// fulfillment reverts UnexpectedRequestID and mints nothing.
+    function resetStuckRequest() external onlyAllowList {
+        if (!requestIdInFlight) revert RequestNotStuck();
+        requestIdInFlight = false;
+        bytes32 stuckId = s_lastRequestId;
+        string memory stuckCode = reqIdToGiftCode[stuckId];
+        delete s_lastRequestId;
+        delete reqIdToAddr[stuckId];
+        delete reqIdToGiftCode[stuckId];
+        if (bytes(stuckCode).length != 0) {
+            _releaseGiftCode(stuckCode);
+        }
     }
 
     /// @dev Releases a claimed gift code (error / unknown-code / unknown-gift-type paths)
@@ -217,6 +269,10 @@ contract GetGift is FunctionsClient, ERC721URIStorage, ReentrancyGuard {
     }
 
     function addToAllowList(address addrToAdd) external onlyAllowList {
+        // the zero address must never join the admin list: an allowlisted
+        // address(0) would inflate allowListCount and let the last live admin
+        // remove themselves without tripping the lockout guard
+        if (addrToAdd == address(0)) revert InvalidRecipient();
         // idempotent: no event / count move on re-add
         if (!allowList[addrToAdd]) {
             allowList[addrToAdd] = true;
