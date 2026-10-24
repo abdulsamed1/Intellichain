@@ -1,3 +1,8 @@
+// FIRST import: agent/.env must reach process.env BEFORE any module that
+// bakes settings from the environment (elizaOS core embeds OPENAI_API_URL
+// et al. at module-evaluation time — a runtime dotenv.config() call from a
+// module body would be too late under ESM hoisting).
+import "dotenv/config";
 import { DirectClient } from "@elizaos/client-direct";
 import {
   AgentRuntime,
