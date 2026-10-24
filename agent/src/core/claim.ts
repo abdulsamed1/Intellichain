@@ -152,6 +152,13 @@ export class GetGiftClient {
           c.address,
         ],
       } as never)) as `0x${string}`;
+      // The poll ladder must not start ticking before the submit tx is MINED:
+      // a pre-inclusion read of giftCodeRedeemed would wrongly declare the
+      // code released while the request is still in flight. Receipt-waiting
+      // is skipped when no public client is wired (offline test path).
+      if (this.publicClient) {
+        await this.publicClient.waitForTransactionReceipt({ hash: txHash });
+      }
       return { kind: "submitted", txHash };
     } catch (err) {
       return { kind: "rejected", text: mapContractError(err) };

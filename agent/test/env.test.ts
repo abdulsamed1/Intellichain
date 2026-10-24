@@ -11,6 +11,8 @@ const MINIMAL: Record<string, string> = {
   EVM_PRIVATE_KEY: "0x" + "ab".repeat(32),
   CONTRACT_ADDRESS: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
   FUNCTIONS_SUBSCRIPTION_ID: "17",
+  // live chains refuse version 0 (it silently burns LINK on unusable asks)
+  FUNCTIONS_SECRET_VERSION: "1",
 };
 const CHECKSUMMED_CONTRACT = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
 
@@ -56,7 +58,7 @@ describe("loadEnv", () => {
     expect(env.chain.network.donId).toBe("fun-ethereum-sepolia-1");
     expect(env.functions.subscriptionId).toBe(17n);
     expect(env.functions.slotId).toBe(0);
-    expect(env.functions.secretVersion).toBe(0n);
+    expect(env.functions.secretVersion).toBe(1n);
     expect(env.functions.fulfillmentTickMs).toBe(15000);
     expect(env.functions.fulfillmentMaxTicks).toBe(60);
     expect(env.serverPort).toBe(3000);
@@ -102,9 +104,47 @@ describe("loadEnv", () => {
     );
   });
 
-  it("coerces TWITTER_TARGET_USERS into a trimmed deduped list", () => {
-    const env = loadEnv({ ...MINIMAL, TWITTER_TARGET_USERS: "vipuser, secondUser ,vipUser,,thirdUser" });
-    expect(env.twitter?.targetUsers).toEqual(["vipuser", "secondUser", "vipUser", "thirdUser"]);
+  it("refuses a sepolia boot without DON secrets (version 0 burns LINK on unusable asks)", () => {
+    const withoutSecrets: Record<string, string> = { ...MINIMAL };
+    delete withoutSecrets.FUNCTIONS_SECRET_VERSION;
+    try {
+      loadEnv(withoutSecrets);
+      expect.unreachable("must have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(EnvError);
+      const envError = err as EnvError;
+      expect(envError.variableName).toBe("FUNCTIONS_SECRET_VERSION");
+      expect(envError.message).toMatch(/don-secrets|don secrets/i);
+    }
+  });
+
+  it("allows secret version 0 on anvil (local mocks skip DON secrets)", () => {
+    const withoutSecrets: Record<string, string> = { ...MINIMAL, NETWORK: "anvil" };
+    delete withoutSecrets.FUNCTIONS_SECRET_VERSION;
+    const env = loadEnv(withoutSecrets);
+    expect(env.functions.secretVersion).toBe(0n);
+    expect(env.chain.network.name).toBe("anvil");
+  });
+
+  it("refuses FULFILLMENT_TICK_MS=0 (a tight RPC hammer)", () => {
+    expect(() => loadEnv({ ...MINIMAL, FULFILLMENT_TICK_MS: "0" })).toThrowError(
+      /FULFILLMENT_TICK_MS/,
+    );
+  });
+
+  it("refuses FULFILLMENT_MAX_TICKS=0 (nothing would ever be awaited)", () => {
+    expect(() => loadEnv({ ...MINIMAL, FULFILLMENT_MAX_TICKS: "0" })).toThrowError(
+      /FULFILLMENT_MAX_TICKS/,
+    );
+  });
+
+  it("trims and dedupes TWITTER_TARGET_USERS case-insensitively (twitter handles are case-insensitive)", () => {
+    const env = loadEnv({
+      ...MINIMAL,
+      TWITTER_TARGET_USERS: "vipuser, secondUser ,vipUser,,thirdUser,vipuser",
+    });
+    // first-seen casing wins; 'vipUser' is the same account as 'vipuser'
+    expect(env.twitter?.targetUsers).toEqual(["vipuser", "secondUser", "thirdUser"]);
   });
 
   it("keeps twitter group atomic: username without credentials fails", () => {

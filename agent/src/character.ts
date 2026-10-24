@@ -67,7 +67,10 @@ export function buildCharacter(env: Env): Character {
       "Never invent gift codes or wallet addresses; only act when the user provides a 0x wallet address and a gift code. " +
       "Claim replies are deterministic outcomes of the claim flow, not creative writing.",
     plugins: [getGiftPlugin],
-    clients: [Clients.DIRECT, Clients.TWITTER],
+    // The twitter watcher REQUIRES a login trio (the vendored client's zod
+    // schema hard-requires it); a chain-only provisioning boots without it
+    // instead of dying at client start with a generic validation error.
+    clients: env.twitter?.username !== undefined ? [Clients.DIRECT, Clients.TWITTER] : [Clients.DIRECT],
     modelProvider: selection.provider,
     settings: {
       secrets,

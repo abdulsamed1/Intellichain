@@ -21,8 +21,8 @@
     "@elizaos/client-direct": "0.1.7",
     "@elizaos/core": "0.1.7",
     "@elizaos/plugin-bootstrap": "0.1.7",
-    "@elizaos/plugin-evm": "^0.1.8",
     "@elizaos/plugin-node": "0.1.7",
+    "@tavily/core": "^0.0.2",
     "agent-twitter-client": "0.0.18",
     "better-sqlite3": "11.5.0",
     "dotenv": "^16.4.7",
@@ -30,7 +30,7 @@
     "node-cache": "^5.1.2",
     "viem": "^2.22.8",
     "ws": "8.18.0",
-    "zod": "3.23.8"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
@@ -41,7 +41,7 @@
   },
   "pnpm": {
     "overrides": {
-      "onnxruntime-node": "1.20.0"
+      "zod": "3.25.76"
     },
     "onlyBuiltDependencies": [
       "@elizaos/plugin-node",

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getFunctionSelector, type WalletClient } from "viem";
+import { getFunctionSelector, type PublicClient, type WalletClient } from "viem";
 import { GetGiftClient, mapContractError } from "../src/core/claim.js";
 import type { Env } from "../src/core/env.js";
 
@@ -72,6 +72,43 @@ describe("mapContractError", () => {
 
   it("falls back to safe generic text for plain string reverts", () => {
     expect(mapContractError(new Error("some require message")).toLowerCase()).toContain("unexpected");
+  });
+});
+
+describe("GetGiftClient.claim receipt gating", () => {
+  it("waits for the tx receipt before reporting submitted", async () => {
+    const waitForTransactionReceipt = vi.fn().mockResolvedValue({ status: "success" });
+    const writeContract = vi.fn().mockResolvedValue(TX_HASH);
+    const client = new GetGiftClient({
+      env: MINIMAL_ENV,
+      walletClient: { writeContract } as unknown as WalletClient,
+      publicClient: { waitForTransactionReceipt } as unknown as PublicClient,
+    });
+    const outcome = await client.claim(CLAIM);
+    expect(outcome).toEqual({ kind: "submitted", txHash: TX_HASH });
+    // order: submit first, receipt wait second, hash passed through
+    expect(writeContract.mock.invocationCallOrder[0]!).toBeLessThan(
+      waitForTransactionReceipt.mock.invocationCallOrder[0]!,
+    );
+    expect(waitForTransactionReceipt).toHaveBeenCalledTimes(1);
+    expect(waitForTransactionReceipt.mock.calls[0]![0]).toEqual({ hash: TX_HASH });
+  });
+
+  it("a reverted receipt is a rejection, never a 'submitted' lie", async () => {
+    const waitForTransactionReceipt = vi.fn().mockRejectedValue(
+      errorWith(revertData("InvalidGiftCode")),
+    );
+    const writeContract = vi.fn().mockResolvedValue(TX_HASH);
+    const client = new GetGiftClient({
+      env: MINIMAL_ENV,
+      walletClient: { writeContract } as unknown as WalletClient,
+      publicClient: { waitForTransactionReceipt } as unknown as PublicClient,
+    });
+    const outcome = await client.claim(CLAIM);
+    expect(outcome).toEqual({
+      kind: "rejected",
+      text: expect.stringMatching(/gift code does not pass validation/i),
+    });
   });
 });
 

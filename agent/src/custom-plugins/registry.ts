@@ -1,6 +1,7 @@
 import type { Env } from "../core/env.js";
 import type { GetGiftClient } from "../core/claim.js";
 import type { MonitorDeps } from "../core/monitor.js";
+import { elizaLogger } from "@elizaos/core";
 
 interface ClaimStack {
   claimClient: GetGiftClient;
@@ -19,7 +20,11 @@ let stack: ClaimStack | undefined;
 
 export function wireClaimStack(parts: ClaimStack): void {
   if (stack) {
-    throw new Error("wireClaimStack called twice — the claim stack is constructed once at boot");
+    // Re-wiring REPLACES the previous stack: the runtime add-agent API can
+    // legitimately start another agent in-process. One stack per process is
+    // the supported shape (multi-character deployments are out of Phase A
+    // scope) — an accidental re-wire stays loud via this log.
+    elizaLogger.error("wireClaimStack called again — replacing the previous claim stack");
   }
   stack = parts;
 }

@@ -53,9 +53,6 @@ export interface Env {
     cloud?: string;
     openai?: string;
     openrouter?: string;
-    small?: string;
-    medium?: string;
-    large?: string;
   };
   serverPort: number;
 }
@@ -85,15 +82,21 @@ const schema = z
       .refine((raw) => Number(raw) <= 255, "uint8 range: 0..255")
       .optional()
       .default("0"),
-    FUNCTIONS_SECRET_VERSION: z.string().regex(DECIMAL, "must be a decimal integer").optional().default("0"),
+    FUNCTIONS_SECRET_VERSION: z
+      .string()
+      .regex(DECIMAL, "must be a decimal integer")
+      .optional()
+      .default("0"),
     FULFILLMENT_TICK_MS: z
       .string()
       .regex(DECIMAL, "must be a decimal number of milliseconds")
+      .refine((v) => Number(v) > 0, "must be greater than 0 (0 would hot-poll the RPC)")
       .optional()
       .default("15000"),
     FULFILLMENT_MAX_TICKS: z
       .string()
       .regex(DECIMAL, "must be a decimal number of poll ticks")
+      .refine((v) => Number(v) >= 1, "must be at least 1 (0 would never await anything)")
       .optional()
       .default("60"),
     SUPABASE_API_KEY: z.string().min(1).optional(),
@@ -106,9 +109,6 @@ const schema = z
     CLOUD: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
-    MODEL_SMALL: z.string().optional(),
-    MODEL_MEDIUM: z.string().optional(),
-    MODEL_LARGE: z.string().optional(),
     SERVER_PORT: z.string().regex(DECIMAL, "must be a decimal port number").optional().default("3000"),
   })
   // undocumented keys are ignorable junk, never an error
@@ -144,6 +144,22 @@ export function loadEnv(source: EnvSource = process.env): Env {
     throw new EnvError("CONTRACT_ADDRESS", (err as Error).message);
   }
 
+  // A zero secret version on a LIVE network silently burns LINK: the DON
+  // runs the claim check WITHOUT the Supabase key, fails every lookup, and
+  // the contract releases every code. Refuse; `make don-secrets` in agent/
+  // uploads the secrets and writes the real slot/version. Local networks
+  // (anvil) skip DON secrets by design, so 0 stays legal there.
+  if (
+    network.name !== "anvil" &&
+    BigInt(raw.FUNCTIONS_SUBSCRIPTION_ID) > 0n &&
+    BigInt(raw.FUNCTIONS_SECRET_VERSION) === 0n
+  ) {
+    throw new EnvError(
+      "FUNCTIONS_SECRET_VERSION",
+      "FUNCTIONS_SECRET_VERSION: 0 on a live network burns LINK on unusable requests - run `make don-secrets` in agent/ first",
+    );
+  }
+
   const privateKey = `0x${raw.EVM_PRIVATE_KEY.replace(/^0x/, "")}` as `0x${string}`;
 
   // twitter login credentials are atomic: partial groups are operator typos
@@ -162,9 +178,16 @@ export function loadEnv(source: EnvSource = process.env): Env {
     throw new EnvError("TWITTER_SEARCH_ENABLE", "TWITTER_SEARCH_ENABLE: must be 'true' or 'false'");
   }
 
-  const targetUsers = raw.TWITTER_TARGET_USERS.split(",")
-    .map((name) => name.trim())
-    .filter((name) => name.length > 0);
+  // twitter handles are CASE-INSENSITIVE; dedupe first-seen so a repeated
+  // mention doubled nothing (e.g. "vipuser, vipUser" one watch only)
+  const targetUsers = Array.from(
+    new Map(
+      raw.TWITTER_TARGET_USERS.split(",")
+        .map((name) => name.trim())
+        .filter((name) => name.length > 0)
+        .map((name) => [name.toLowerCase(), name] as const),
+    ).values(),
+  );
 
   return {
     chain: {
@@ -200,9 +223,6 @@ export function loadEnv(source: EnvSource = process.env): Env {
       cloud: raw.CLOUD,
       openai: raw.OPENAI_API_KEY,
       openrouter: raw.OPENROUTER_API_KEY,
-      small: raw.MODEL_SMALL,
-      medium: raw.MODEL_MEDIUM,
-      large: raw.MODEL_LARGE,
     },
     serverPort: Number(raw.SERVER_PORT),
   };

@@ -74,6 +74,28 @@ describe("extractClaim", () => {
       code: "GIFTX24",
     });
   });
+
+  it("the digit rule: a digitless token is never mistaken for a gift code", () => {
+    // real codes carry digits (HAPPYGIFT24); bare words must not redeem
+    const attempt = extractClaim(
+      "gifting to 0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed with code HAPPYGIFT",
+    );
+    expect(attempt.exact).toBe(false);
+    if (!attempt.exact) {
+      expect(attempt.candidates.address).toBe("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed");
+      expect(attempt.candidates.code).toBeUndefined();
+      expect(attempt.hint).toContain("no gift code token");
+    }
+  });
+
+  it("a digitless standalone word alone never yields a code candidate", () => {
+    const attempt = extractClaim("please HAPPYGIFT thanks");
+    expect(attempt.exact).toBe(false);
+    if (!attempt.exact) {
+      expect(attempt.candidates.codes).toBeUndefined();
+      expect(attempt.candidates.code).toBeUndefined();
+    }
+  });
 });
 
 describe("looksLikeEvmAddress", () => {

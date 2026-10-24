@@ -160,6 +160,16 @@ const startAgents = async () => {
       "CLOUD rides the OpenAI-compatible provider; set OPENAI_API_URL in agent/.env for a custom endpoint",
     );
   }
+  if (env.twitter?.username === undefined) {
+    console.log(
+      "Twitter watching disabled - no login trio in .env; the direct channel only",
+    );
+  }
+  if (env.chain.network.name !== "anvil" && env.functions.secretVersion === 0n) {
+    console.log(
+      "WARNING: running live with slot/version 0 - DON-hosted secrets are NOT uploaded; claims will fail fulfillment",
+    );
+  }
 
   let serverPort = parseInt(settings.SERVER_PORT || "3000");
   const args = parseArguments();
@@ -171,7 +181,11 @@ const startAgents = async () => {
   if (charactersArg) {
     characters = await loadCharacters(charactersArg);
   }
-  console.log("characters", characters);
+  // Print NAMES ONLY — the character object carries injected model secrets.
+  console.log(
+    "characters",
+    characters.map((c) => c.name),
+  );
   try {
     for (const character of characters) {
       await startAgent(character, env, directClient as DirectClient);
