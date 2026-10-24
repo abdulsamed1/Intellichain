@@ -63,7 +63,7 @@
 
 ### Task 4: Claim module (contract client + error mapping)
 
-**Files:** Create `agent/src/core/claim.ts`, `agent/src/core/contract-errors.ts`; artifact copied `agent/src/core/artifacts/GetGift.json` (fresh from `contract/out/GetGift.sol/GetGift.json` build — source of truth now the real contract); Test `agent/test/claim.test.ts`.
+**Files:** Create `agent/src/core/claim.ts`, `agent/src/core/contract-errors.ts` *(implemented ruling: `contract-errors` merged into `claim.ts` — one cohesive module beat an extra indirection; the error text table lives at the top of `claim.ts`)*; artifact copied `agent/src/core/artifacts/GetGift.json` (fresh from `contract/out/GetGift.sol/GetGift.json` build — source of truth now the real contract); Test `agent/test/claim.test.ts`.
 
 **Interfaces:**
 - Consumes Task 2 env/networks, Task 3 Claim.

@@ -33,6 +33,12 @@ contract v2 has public getters (`giftCodeRedeemed`), custom errors, and
    (viem `getAddress`) for {address, code}; LLM fallback only when regex
    fails — instead of the template's LLM-only `generateObjectDeprecated`
    path (burned tokens; no validation).
+   > **Fulfilled as clarify-ask — implemented ruling (review fix pass
+   > 2026-10-24):** the LLM fallback was NOT reinstated. When the regex
+   > path is inexact, the agent asks the user for the missing piece via
+   > `clarifyReply` (candidate-aware, zero tokens). LLM object generation
+   > is reserved for elizaOS's own message-response pipeline (who to reply
+   > to / when the action applies), never for claim DATA.
 4. **Contract-aware claim error surface**: decode GetGift custom errors
    (`CodeAlreadyRedeemed`, `RequestAlreadyInFlight`, `CodeAlreadyRedeemed`,
    `InvalidGiftCode`, `InvalidRecipient`, `CallerNotAllowlisted`) into

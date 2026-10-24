@@ -2,7 +2,7 @@
 # node >= 22. `make don-secrets` uploads the DON-hosted secrets and writes
 # FUNCTIONS_SLOT_ID / FUNCTIONS_SECRET_VERSION back into .env (never the key).
 
-.PHONY: help typecheck test check don-secrets start fmt
+.PHONY: help typecheck test check don-secrets start
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)

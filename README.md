@@ -105,7 +105,7 @@ address + code mask — no LLM object generation in the claim path), submits
 **minted / released (retry) / still watching** in the same thread.
 
 ```bash
-cd agent && make check   # offline: typecheck + 48-test suite, zero secrets
+cd agent && make check   # offline: typecheck + 58-test suite, zero secrets
 ```
 
 Everything private arrives via `agent/.env` only (RPC, dedicated relayer

@@ -39,17 +39,21 @@ Key wiring: chain clients are constructed **once at boot**
 (`src/core/claim.ts::makeClients`) and published through the claim-stack
 registry (`src/custom-plugins/registry.ts::wireClaimStack`). The action
 reads them per invocation; unwired access throws an error that names the
-boot step instead of dereferencing null.
+boot step instead of dereferencing null. (Test-suite note: the registry's
+"unwired → throw" test depends on running BEFORE the wiring test within
+that one vitest file — module state is shared per file; keep those two
+tests in the same file when reorganizing.)
 
 ## Quickstart
 
 Prerequisites: Node `>=22`, pnpm `10.34.8` (see `packageManager`), a funded
-relayer wallet, and the contract deployed (see `../contract/README.md`).
+relayer wallet, and the contract deployed (`make deploy` in `contract/`).
 
 1. **Deploy the contract first** — from `contract/`: `make deploy`. Copy the
    resulting address into `CONTRACT_ADDRESS`.
-2. **Prepare the chain side** — the relayer wallet must be
-   [allowlisted](../contract/README.md#allowlist) on `GetGift`, funded with
+2. **Prepare the chain side** — the relayer wallet must be allowlisted on
+   `GetGift` (root README, "Chainlink Functions: subscription & secrets"),
+   funded with
    Sepolia ETH, with LINK approved into the Functions subscription.
 3. **Configure the agent**
    ```bash
@@ -64,7 +68,7 @@ relayer wallet, and the contract deployed (see `../contract/README.md`).
    ```
 5. **Verify offline, then start**
    ```bash
-   make check     # typecheck + 48-test offline suite
+   make check     # typecheck + 58-test offline suite
    make start     # boots GiftPilot: direct chat + twitter watcher
    ```
 
@@ -89,7 +93,7 @@ exercises run the Anvil fork per the contract README and point
 | Twitter | `TWITTER_TARGET_USERS` | – | accounts to watch; defaults to mentions only |
 | Twitter | `TWITTER_SEARCH_ENABLE` | – | proactive search (more API surface) |
 | Model | `OPENAI_API_KEY` \> `OPENROUTER_API_KEY` \> `CLOUD` | ✓ (one) | precedence; see below |
-| Model | `MODEL_SMALL` / `MODEL_MEDIUM` / `MODEL_LARGE` | – | per-size model pinning |
+| Model | `OPENAI_API_URL` + `SMALL/MEDIUM/LARGE_OPENAI_MODEL` | – | passthrough (e.g. FreeLLMAPI); see precedence |
 | Runtime | `SERVER_PORT` | – | direct-client API port (default 3000) |
 
 `loadEnv()` validates EVERYTHING up-front (zod per-field schemas; errors
@@ -106,9 +110,14 @@ name the offending variable) — the agent refuses to boot half-configured.
    ```env
    OPENAI_API_URL=https://your-openai-compatible-endpoint/v1
    ```
-   (Trustworthy providers that speak the OpenAI Chat Completions dialect,
-   e.g. aggregator endpoints, work as-is.)
-4. No key → the boot fails with the precedence message.
+4. **Free/self-hosted route (recommended): [FreeLLMAPI](https://github.com/abdulsamed1/freellmapi)**
+   — one OpenAI-compatible `/v1` router aggregating free provider tiers
+   (`http://localhost:3001/v1` by default; keys encrypted in its dashboard).
+   Copy the unified key into `OPENAI_API_KEY` and set
+   `OPENAI_API_URL=http://localhost:3001/v1`; optionally pin per-size models
+   with its auto-router strategies via `SMALL_OPENAI_MODEL=auto:fast`,
+   `MEDIUM_OPENAI_MODEL=auto`, `LARGE_OPENAI_MODEL=auto:smart`.
+5. No key → the boot fails with the precedence message.
 
 The chosen keys are injected into the **in-memory character clone** at
 runtime — never into files, never into logs (the private key's *address*
@@ -138,12 +147,24 @@ database/cache/clients). Each file carries a provenance header listing its
 adaptations (behavior-preserving strictness pins only; `environment.ts` was
 wired to the `.env` pipeline as the single source of truth).
 
+### Dependency notes (unpacking two elizaOS 0.1.7 packaging gaps)
+
+- **`@tavily/core` is declared explicitly**: elizaOS core 0.1.7 statically
+  imports it (`import { tavily } from "@tavily/core"`) while listing it
+  only under its own devDependencies — without a declared provider the
+  runtime fails at import time. It is dormant unless `TAVILY_API_KEY` is
+  provisioned at runtime.
+- **pnpm override pins `zod` workspace-wide (3.25.x)**: core itself
+  hard-pins `zod@3.23.8`, but `zod-to-json-schema` in its import chain
+  imports the `zod/v3` subpath, which only exists in zod ≥ 3.25 — without
+  the unified version the runtime crashes on first import of core.
+
 ## Make targets
 
 | Target | What it does |
 |---|---|
 | `make typecheck` | `tsc --noEmit` over the agent |
-| `make test` | offline vitest suite (5 files / 48 tests) |
+| `make test` | offline vitest suite (6 files / 58 tests) |
 | `make check` | both (the CI gate) |
 | `make don-secrets` | encrypt + upload DON secrets; writes slot/version into `.env` |
 | `make start` | start the runtime from `.env` |
