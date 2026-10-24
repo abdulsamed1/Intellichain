@@ -1,6 +1,6 @@
 # Intellichain 🔗✨
 
-**Turn a tweet into a real onchain gift: an AI agent parses the reply, a decentralized oracle verifies the claim, and a hardened contract mints the NFT — nobody holds the database, and the agent never guesses.**
+**Turn a tweet into a real on-chain gift: an AI agent parses the reply, a decentralized oracle verifies the claim, and a hardened contract mints the NFT — nobody holds the database, and the agent never guesses.**
 
 > Open-source portfolio project: the interesting half isn't the Solidity — it's an LLM agent that is deliberately wired so it **cannot hallucinate a claim**.
 
@@ -21,7 +21,6 @@ files only and stays there.
 > ⚠️ **This is un-audited code, derived from Chainlink's example contracts.**
 > Do not use it in production without a professional audit.
 
-## ⚡ Why it's interesting to AI engineers
 
 Most "AI meets blockchain" demos let a language model read a message and act
 on it directly. GiftPilot is built different: **the model picks the moment,
@@ -45,7 +44,7 @@ deterministically, validated, and enforced by contract-shaped rejections.
 - **Receipt-gated truth-telling.** The claim submission awaits the
   transaction **receipt** before the fulfillment poll ladder may tick;
   the monitor races event-watchers against a `giftCodeRedeemed` poll
-  (first-settled wins) and reports **minted / released / still watching** —
+  (first-settled wins) and reports **minted/released / still watching** —
   never a premature "done" while the transaction is still flying.
 - **Fail-fast, secret-hygienic boot.** A zod-validated env gate refuses
   half-configured boots *and* dangerous combinations (a live network with
@@ -97,7 +96,7 @@ post-shield poll, and a mint settles the answer permanently.
 ## 🧭 The agent in one screen
 
 ```
-tweet mention ──▶ vendored twitter client (interactions.ts)
+tweet mention ──▶ vendored X client (interactions.ts)
                      │  elizaOS message pipeline (who/when = LLM)
                      ▼
                GET_GIFT action  ── data decisions are DETERMINISTIC ──
@@ -254,7 +253,7 @@ secrets are wired up — in this order:
    project URL it validates gift codes against, and contract constants are
    immutable: switching to your own Supabase project means editing `SOURCE`
    in `src/GetGift.sol` and **redeploying**. There is no post-deployment knob.
-6. **Stuck requests** — if a fulfillment could never complete (e.g. callback
+6. **Stuck requests** — if a fulfillment could never complete (e.g., callback
    ran out of its 300k gas after the Router consumed the request), the
    one-request invariant stays stuck; any allowlisted admin clears it with
    `make send FUNCTION="resetStuckRequest()"` after verifying in the Router
@@ -289,7 +288,7 @@ docker build -t intellichain:latest .   # note the space after "."
 docker run -it --rm intellichain:latest bash
 ```
 
-Inside you already have a compiled, analyzed copy of the project in
+Inside, you already have a compiled, analyzed copy of the project in
 `/app/Intellichain/contract`.
 
 ## 🧬 Contract surface (`contract/src/GetGift.sol`)
