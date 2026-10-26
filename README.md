@@ -1,8 +1,16 @@
-# Intellichain 🔗✨
+# On-Chain Rewards Engine
 
-**Turn a tweet into a real on-chain gift: an AI agent parses the reply, a decentralized oracle verifies the claim, and a hardened contract mints the NFT — nobody holds the database, and the agent never guesses.**
+A test-first EVM rewards system built with Solidity and Foundry. A TypeScript AI agent parses claim requests deterministically, Chainlink Functions validates off-chain claim data, and an ERC-721 smart contract mints rewards after oracle fulfillment.
 
-> Open-source portfolio project: the interesting half isn't the Solidity — it's an LLM agent that is deliberately wired so it **cannot hallucinate a claim**.
+Engineering focus
+
+- Smart Contracts: Solidity, Foundry, ERC-721, access control, and duplicate-claim prevention.
+- Oracle Integration: Chainlink Functions, off-chain data validation, and fulfillment handling.
+- Agent Integration: TypeScript, viem, deterministic input extraction, and transaction monitoring.
+- Reliability: Automated tests for invalid claims, oracle failures, recovery paths, and transaction outcomes.
+- CI: Automated contract and agent checks through GitHub Actions.
+
+Project status: Portfolio project. The contracts have not undergone a professional security audit and are not intended for production use without further review.
 
 [![CI](https://github.com/abdulsamed1/Intellichain/actions/workflows/ci.yml/badge.svg)](https://github.com/abdulsamed1/Intellichain/actions/workflows/ci.yml)
 ![Offline tests](https://img.shields.io/badge/offline%20tests-121%20passing-brightgreen)
